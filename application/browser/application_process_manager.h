@@ -14,6 +14,8 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "base/time.h"
+#include "content/public/browser/notification_observer.h"
+#include "content/public/browser/notification_registrar.h"
 #include "xwalk/application/common/application.h"
 
 class GURL;
@@ -31,7 +33,7 @@ class Manifest;
 
 // This manages dynamic state of running applications. By now, it only launches
 // one application, later it will manages all event pages' lifecycle.
-class ApplicationProcessManager {
+class ApplicationProcessManager: public content::NotificationObserver {
  public:
   explicit ApplicationProcessManager(xwalk::RuntimeContext* runtime_context);
   ~ApplicationProcessManager();
@@ -39,11 +41,18 @@ class ApplicationProcessManager {
   bool LaunchApplication(xwalk::RuntimeContext* runtime_context,
                          const Application* application);
 
+  // content::NotificationObserver
+  virtual void Observe(int type,
+                       const content::NotificationSource& source,
+                       const content::NotificationDetails& details) OVERRIDE;
+
  private:
   bool RunMainDocument(const Application* application);
   bool RunFromLocalPath(const Application* application);
 
   xwalk::RuntimeContext* runtime_context_;
+  content::NotificationRegistrar registrar_;
+  scoped_refptr<const Application> application_;
   base::WeakPtrFactory<ApplicationProcessManager> weak_ptr_factory_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationProcessManager);

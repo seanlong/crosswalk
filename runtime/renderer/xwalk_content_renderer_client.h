@@ -12,6 +12,10 @@
 
 namespace xwalk {
 
+namespace application {
+class ApplicationRendererController;
+}
+
 namespace extensions {
 class XWalkExtensionRendererController;
 }
@@ -35,6 +39,7 @@ class XWalkContentRendererClient : public content::ContentRendererClient {
  private:
   scoped_ptr<extensions::XWalkExtensionRendererController>
       extension_controller_;
+  application::ApplicationRendererController* application_controller_;
 
   DISALLOW_COPY_AND_ASSIGN(XWalkContentRendererClient);
 };

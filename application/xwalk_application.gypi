@@ -37,6 +37,8 @@
         'common/application_manifest_constants.h',
         'common/application_resource.cc',
         'common/application_resource.h',
+        'common/application_messages.cc',
+        'common/application_messages.h',
         'common/constants.cc',
         'common/constants.h',
         'common/id_util.cc',
@@ -48,6 +50,9 @@
         'common/db_store.h',
         'common/db_store_json_impl.cc',
         'common/db_store_json_impl.h',
+
+        'renderer/application_renderer_controller.cc',
+        'renderer/application_renderer_controller.h',
       ],
       'include_dirs': [
         '../..',

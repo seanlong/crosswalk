@@ -2,9 +2,15 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-#include <string>
 #include "xwalk/application/browser/application_process_manager.h"
+
+#include <string>
+
+#include "content/public/browser/notification_service.h"
+#include "content/public/browser/notification_types.h"
+#include "content/public/browser/render_process_host.h"
 #include "xwalk/application/common/application_manifest_constants.h"
+#include "xwalk/application/common/application_messages.h"
 #include "xwalk/application/common/constants.h"
 #include "xwalk/runtime/browser/runtime.h"
 #include "xwalk/runtime/browser/runtime_context.h"
@@ -21,6 +27,8 @@ ApplicationProcessManager::ApplicationProcessManager(
     RuntimeContext* runtime_context)
     : runtime_context_(runtime_context),
       weak_ptr_factory_(this) {
+  registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
+      content::NotificationService::AllBrowserContextsAndSources());
 }
 
 ApplicationProcessManager::~ApplicationProcessManager() {
@@ -66,6 +74,7 @@ bool ApplicationProcessManager::RunMainDocument(
   }
 
   Runtime::Create(runtime_context_, url);
+  application_ = application;
   return true;
 }
 
@@ -82,10 +91,30 @@ bool ApplicationProcessManager::RunFromLocalPath(
     }
 
     Runtime::CreateWithDefaultWindow(runtime_context_, url);
+    application_ = application;
     return true;
   }
 
   return false;
+}
+
+void ApplicationProcessManager::Observe(int type,
+    const content::NotificationSource& source,
+    const content::NotificationDetails& details) {
+  switch (type) {
+    case content::NOTIFICATION_RENDERER_PROCESS_CREATED: {
+      if (!application_.get())
+        break;
+      content::RenderProcessHost* process =
+        content::Source<content::RenderProcessHost>(source).ptr();
+      ApplicationMsg_Launched_Params launched_application(application_.get());
+      process->Send(new ApplicationMsg_Launched(launched_application));
+      break;
+    }
+
+    default:
+      NOTREACHED() << "Unexpected notification type.";
+  }
 }
 
 }  // namespace application
