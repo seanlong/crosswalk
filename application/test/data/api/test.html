@@ -1,0 +1,43 @@
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <script>
+    function assert(condition, message) {
+      if (!condition)
+        throw message || "Assertion failed";
+    }
+
+    function testCase(fn) {
+      try {
+        fn();
+      } catch(e) {
+        console.log(e);
+        document.title = "Fail";
+      }
+    }
+
+    function testGetManifest() {
+      var manifest = xwalk.application.getManifest();
+      assert(manifest);
+      assert(manifest.name === "xwalk.application API Test");
+      assert(manifest.version === "1.0");
+      assert(manifest.manifest_version === 1);
+    }
+
+    function testGetMainDocument() {
+      xwalk.application.getMainDocument(function(main) {
+        testCase(function() {
+          assert(main);
+          assert(main.initialized);
+          document.title = "Pass"; 
+        });
+      });
+    }
+
+    testCase(testGetManifest);
+    testCase(testGetMainDocument);
+  </script>
+</body>
+</html>
