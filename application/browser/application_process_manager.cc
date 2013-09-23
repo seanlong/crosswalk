@@ -26,6 +26,7 @@ namespace application {
 ApplicationProcessManager::ApplicationProcessManager(
     RuntimeContext* runtime_context)
     : runtime_context_(runtime_context),
+      main_runtime_(NULL),
       weak_ptr_factory_(this) {
   registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
       content::NotificationService::AllBrowserContextsAndSources());
@@ -73,7 +74,7 @@ bool ApplicationProcessManager::RunMainDocument(
     return false;
   }
 
-  Runtime::Create(runtime_context_, url);
+  main_runtime_ = Runtime::Create(runtime_context_, url);
   application_ = application;
   return true;
 }

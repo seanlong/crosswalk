@@ -41,6 +41,8 @@ class ApplicationProcessManager: public content::NotificationObserver {
   bool LaunchApplication(xwalk::RuntimeContext* runtime_context,
                          const Application* application);
 
+  Runtime* GetMainDocumentRuntime() const { return main_runtime_; }
+
   // content::NotificationObserver
   virtual void Observe(int type,
                        const content::NotificationSource& source,
@@ -51,6 +53,7 @@ class ApplicationProcessManager: public content::NotificationObserver {
   bool RunFromLocalPath(const Application* application);
 
   xwalk::RuntimeContext* runtime_context_;
+  xwalk::Runtime* main_runtime_;
   content::NotificationRegistrar registrar_;
   scoped_refptr<const Application> application_;
   base::WeakPtrFactory<ApplicationProcessManager> weak_ptr_factory_;

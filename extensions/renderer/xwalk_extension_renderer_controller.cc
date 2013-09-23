@@ -14,6 +14,7 @@
 #include "third_party/WebKit/public/web/WebFrame.h"
 #include "third_party/WebKit/public/web/WebScopedMicrotaskSuppression.h"
 #include "v8/include/v8.h"
+#include "xwalk/application/renderer/application_native_module.h"
 #include "xwalk/extensions/common/xwalk_extension_messages.h"
 #include "xwalk/extensions/renderer/xwalk_extension_client.h"
 #include "xwalk/extensions/renderer/xwalk_extension_module.h"
@@ -55,6 +56,9 @@ void XWalkExtensionRendererController::DidCreateScriptContext(
 
   module_system->RegisterNativeModule(
       "v8tools", scoped_ptr<XWalkNativeModule>(new XWalkV8ToolsModule));
+  module_system->RegisterNativeModule(
+      "application", scoped_ptr<XWalkNativeModule>(
+        new xwalk::application::ApplicationNativeModule(context)));
 
   in_browser_process_extensions_client_->CreateRunnersForModuleSystem(
       module_system);

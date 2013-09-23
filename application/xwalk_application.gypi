@@ -51,11 +51,20 @@
         'common/db_store_json_impl.cc',
         'common/db_store_json_impl.h',
 
+        'extension/application_api.js',
+        'extension/application_extension.cc',
+        'extension/application_extension.h',
+
+        'renderer/application_native_module.cc',
+        'renderer/application_native_module.h',
         'renderer/application_renderer_controller.cc',
         'renderer/application_renderer_controller.h',
       ],
       'include_dirs': [
         '../..',
+      ],
+      'includes': [
+        '../extensions/xwalk_js2c.gypi',
       ],
     }],
 }
