@@ -39,6 +39,10 @@ class ApplicationSystem {
     return application_service_.get();
   }
 
+  ApplicationEventRouter* event_router() {
+    return event_router_.get();
+  }
+
  private:
   xwalk::RuntimeContext* runtime_context_;
   scoped_ptr<ApplicationEventRouter> event_router_;

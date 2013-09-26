@@ -244,6 +244,23 @@ gboolean NativeAppWindowGtk::OnWindowState(GtkWidget* window,
         content::Source<NativeAppWindow>(this),
         content::NotificationService::NoDetails());
   }
+
+  if ((old_state &  GDK_WINDOW_STATE_ICONIFIED) !=
+      (state_ & GDK_WINDOW_STATE_ICONIFIED)) {
+    if (state_ == GDK_WINDOW_STATE_ICONIFIED)
+      web_contents_->WasHidden();
+    else
+      web_contents_->WasShown();
+    // TODO clean this up
+    /*
+    bool visible = state_ == GDK_WINDOW_STATE_ICONIFIED ? false : true;
+    content::NotificationService::current()->Notify(
+       content::NOTIFICATION_WEB_CONTENTS_VISIBILITY_CHANGED,
+       content::Source<content::WebContents>(web_contents_),
+       content::Details<const bool>(&visible));
+    */
+  }
+
   return FALSE;
 }
 

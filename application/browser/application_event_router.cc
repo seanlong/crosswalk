@@ -4,8 +4,11 @@
 
 #include "xwalk/application/browser/application_event_router.h"
 
+#include <algorithm>
+
 #include "base/bind.h"
 #include "content/public/browser/web_contents.h"
+#include "xwalk/application/browser/lifecycle_event_propagator.h"
 #include "xwalk/runtime/browser/runtime.h"
 #include "xwalk/runtime/browser/runtime_context.h"
 #include "xwalk/runtime/browser/runtime_registry.h"
@@ -53,25 +56,32 @@ void AppVisibilityObserver::RegisterEventHandlers() {
 void AppVisibilityObserver::OnHide(const linked_ptr<ApplicationEvent>& event,
     const base::Callback<void()>& callback) {
   // At present all Runtime instances belong to one application.
+#if 0
   const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
   xwalk::RuntimeList::const_iterator it = runtimes.begin();
   for (; it != runtimes.end(); it++) {
     content::WebContents* contents = (*it)->web_contents();
     contents->WasHidden();
   }
+#endif
+  // We can do something here... e.g., purge V8 memory
+  LOG(INFO) << "Let's do hidden work!"; 
 
   callback.Run();
 }
 
 void AppVisibilityObserver::OnShow(const linked_ptr<ApplicationEvent>& event,
     const base::Callback<void()>& callback) {
+#if 0
   const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
   xwalk::RuntimeList::const_iterator it = runtimes.begin();
   for (; it != runtimes.end(); it++) {
     content::WebContents* contents = (*it)->web_contents();
     contents->WasShown();
   }
-
+#endif
+  LOG(INFO) << "Let's do shown work!";
+  
   callback.Run();
 }
 
@@ -93,8 +103,8 @@ ApplicationEventRouter::ObserverRegistrar::ObserverRegistrar(
 
 void ApplicationEventRouter::ObserverRegistrar::Add(
     ApplicationEventObserver* observer) {
-  router_->AddObserver(observer);
   owner_ = observer;
+  router_->AddObserver(observer);
 }
 
 void ApplicationEventRouter::ObserverRegistrar::Remove() {
@@ -122,7 +132,11 @@ ApplicationEventRouter::EventHandler::EventHandler(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+static LifecycleEventPropagator* g_lifecycle_propagator;
+
 ApplicationEventRouter::ApplicationEventRouter(RuntimeContext* context) {
+  //TODO where to put these propagators and observers??
+  g_lifecycle_propagator = new LifecycleEventPropagator(context);
   ApplicationEventObserver* visibilty_observer =
     new AppVisibilityObserver(this, context);
 }
@@ -163,12 +177,13 @@ void ApplicationEventRouter::DispatchEvent(
   EventHandlerMap::iterator it = handlers_map_.find(event->name);
   if (it != handlers_map_.end())
     handlers = &(it->second);
-  if (handlers && !handlers->empty()) {
+
+  if (handlers && handlers->empty()) {
     LOG(WARNING) << "No registered handler to handle event:" << event->name;
     return;
   }
 
-  // Run handlers asynchronously.
+  // Run handlers with callback.
   cur_event_ = event;
   cur_handlers_ = handlers;
   cur_handler_it_ = handlers->begin();
@@ -178,8 +193,8 @@ void ApplicationEventRouter::DispatchEvent(
 }
 
 void ApplicationEventRouter::ProceedHandler() {
-  // FIXME Will there be race condition when a handler is removed during the
-  // process? e.g., when current handler be erased, the iterator will become
+  // FIXME There could be race condition when a handler is removed during the
+  // process. e.g., when current handler be erased, the iterator will become
   // invalid, then we need to update the iterator in the remove routine.
   cur_handler_it_++;
   if (cur_handler_it_ == cur_handlers_->end()) {
@@ -201,9 +216,9 @@ void ApplicationEventRouter::AddEventHandler(ApplicationEventObserver* observer,
                                              int priority,
                                              const EventHandlerCallback& callback) {
   ObserverList::iterator observer_it =
-    find(observers_.begin(), observers_.end(), observer);
+    std::find(observers_.begin(), observers_.end(), observer);
   if (observer_it == observers_.end()) {
-    LOG(WARNING) << "Can't add event before the observer is registered.";
+    LOG(WARNING) << "Can't add event handler before the observer is registered.";
     return;
   }
 
@@ -224,7 +239,7 @@ void ApplicationEventRouter::RemoveEventHandler(
   ObserverList::iterator observer_it =
     find(observers_.begin(), observers_.end(), observer);
   if (observer_it == observers_.end()) {
-    LOG(WARNING) << "Can't remove event before the observer is registered.";
+    LOG(WARNING) << "Can't remove event handler before the observer is registered.";
     return;
   }
 
@@ -236,6 +251,10 @@ void ApplicationEventRouter::RemoveEventHandler(
     else
       ++it;
   }
+#if 0
+  for (HandlerList::iterator it = handlers.begin(); it != handlers.end(); it++)
+    printf("%d %p\n", __LINE__, it->owner);
+#endif
 }
 
 void ApplicationEventRouter::RemoveObserverEventHandlers(

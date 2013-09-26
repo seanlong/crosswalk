@@ -30,6 +30,8 @@
         'browser/installer/xpk_extractor.h',
         'browser/installer/xpk_package.cc',
         'browser/installer/xpk_package.h',
+        'browser/lifecycle_event_propagator.cc',
+        'browser/lifecycle_event_propagator.h',
 
         'common/application.cc',
         'common/application.h',
