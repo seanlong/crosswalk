@@ -7,11 +7,33 @@
 #include <string>
 
 #include "base/memory/singleton.h"
+#include "base/strings/utf_string_conversions.h"
 #include "content/public/renderer/render_thread.h"
+#include "content/public/renderer/render_view.h"
+#include "content/public/renderer/render_view_visitor.h"
 #include "xwalk/application/common/application_messages.h"
 
 namespace xwalk {
 namespace application {
+
+// TODO remove this later...
+namespace {
+class RenderViewEventCallbacker : public content::RenderViewVisitor {
+ public:
+  bool Visit(content::RenderView* render_view) OVERRIDE;
+};
+
+bool RenderViewEventCallbacker::Visit(content::RenderView* render_view) {
+  std::string js = "if (xwalk.application.onShow) "
+                   "xwalk.application.onShow();";
+  string16 js16;
+  UTF8ToUTF16(js.c_str(), js.length(), &js16);
+  string16 frame_xpath;
+  render_view->EvaluateScript(frame_xpath, js16, 0, false);
+  return true;
+}
+
+}
 
 ApplicationRendererController* ApplicationRendererController::GetInstance() {
   return Singleton<ApplicationRendererController>::get();
@@ -31,6 +53,7 @@ bool ApplicationRendererController::OnControlMessageReceived(
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ApplicationRendererController, message)
     IPC_MESSAGE_HANDLER(ApplicationMsg_Launched, OnLaunched)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_Show, OnShow)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
@@ -44,6 +67,15 @@ void ApplicationRendererController::OnLaunched(
   if (!application_.get()) {
     LOG(ERROR) << "Can't convert application parameter from browser process.";
   }
+}
+
+void ApplicationRendererController::OnShow() {
+  //TODO make event object, register/callback framework.
+  
+  //For now we just visit each render view's context and do callback if exist.
+  RenderViewEventCallbacker callbacker;
+  content::RenderView::ForEach(&callbacker);
+  content::RenderThread::Get()->Send(new ApplicationMsg_ShowAck());
 }
 
 const Application*

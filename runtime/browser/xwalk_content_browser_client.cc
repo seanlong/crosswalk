@@ -9,6 +9,9 @@
 #include "base/command_line.h"
 #include "base/path_service.h"
 #include "base/platform_file.h"
+#include "xwalk/application/browser/application_event_router.h"
+#include "xwalk/application/browser/application_system.h"
+#include "xwalk/application/browser/lifecycle_event_observer.h"
 #include "xwalk/extensions/browser/xwalk_extension_service.h"
 #include "xwalk/runtime/browser/xwalk_browser_main_parts.h"
 #include "xwalk/runtime/browser/geolocation/xwalk_access_token_store.h"
@@ -118,6 +121,14 @@ XWalkContentBrowserClient::GetWebContentsViewDelegate(
 void XWalkContentBrowserClient::RenderProcessHostCreated(
     content::RenderProcessHost* host) {
   main_parts_->extension_service()->OnRenderProcessHostCreated(host);
+ 
+  //TODO clean this up. 
+  RuntimeContext* runtime_context =
+    static_cast<RuntimeContext*>(host->GetBrowserContext());
+  application::ApplicationEventRouter* event_router =
+    runtime_context->GetApplicationSystem()->event_router();
+  host->GetChannel()->AddFilter(
+      new application::LifecycleEventObserver(event_router, runtime_context));
 }
 
 content::MediaObserver* XWalkContentBrowserClient::GetMediaObserver() {

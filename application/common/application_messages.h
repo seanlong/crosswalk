@@ -54,3 +54,9 @@ struct ParamTraits<ApplicationMsg_Launched_Params> {
 // Notifies the renderer that the application was launched.
 IPC_MESSAGE_CONTROL1(ApplicationMsg_Launched,  // NOLINT(*)
                      ApplicationMsg_Launched_Params)
+
+IPC_MESSAGE_CONTROL0(ApplicationMsg_Show)
+
+IPC_MESSAGE_CONTROL0(ApplicationMsg_ShowAck)
+
+IPC_MESSAGE_CONTROL0(ApplicationMsg_Hide)

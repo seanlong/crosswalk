@@ -32,8 +32,6 @@ class LifecycleEventPropagator : public content::NotificationObserver {
   ApplicationEventRouter* router_;
 };
 
-
-
 }
 }
 

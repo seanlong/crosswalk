@@ -7,85 +7,14 @@
 #include <algorithm>
 
 #include "base/bind.h"
-#include "content/public/browser/web_contents.h"
 #include "xwalk/application/browser/lifecycle_event_propagator.h"
 #include "xwalk/runtime/browser/runtime.h"
 #include "xwalk/runtime/browser/runtime_context.h"
 #include "xwalk/runtime/browser/runtime_registry.h"
 
-using xwalk::RuntimeContext;
-using xwalk::RuntimeRegistry;
 
 namespace xwalk {
 namespace application {
-
-////////////////////////////////////////////////////////////////////////////////
-namespace {
-
-class AppVisibilityObserver : public ApplicationEventObserver {
- public:
-  AppVisibilityObserver(
-      ApplicationEventRouter* router, RuntimeContext* context);
-  void RegisterEventHandlers() OVERRIDE;
- 
- private:
-  void OnHide(const linked_ptr<ApplicationEvent>& event,
-      const base::Callback<void()>& callback);
-  void OnShow(const linked_ptr<ApplicationEvent>& event,
-      const base::Callback<void()>& callback);
-//  void OnHide(const linked_ptr<ApplicationEvent>& event);
-//  void OnShow(const linked_ptr<ApplicationEvent>& event);
-
-  RuntimeContext* runtime_context_;
-};
-
-AppVisibilityObserver::AppVisibilityObserver(
-    ApplicationEventRouter* router, RuntimeContext* context)
-  : ApplicationEventObserver(router),
-    runtime_context_(context) {
-  registrar_.Add(this);
-}
-
-void AppVisibilityObserver::RegisterEventHandlers() {
-  registrar_.AddEventHandler("HIDE", 0,
-      base::Bind(&AppVisibilityObserver::OnHide, base::Unretained(this)));
-  registrar_.AddEventHandler("SHOW", 0,
-      base::Bind(&AppVisibilityObserver::OnShow, base::Unretained(this)));
-}
-
-void AppVisibilityObserver::OnHide(const linked_ptr<ApplicationEvent>& event,
-    const base::Callback<void()>& callback) {
-  // At present all Runtime instances belong to one application.
-#if 0
-  const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
-  xwalk::RuntimeList::const_iterator it = runtimes.begin();
-  for (; it != runtimes.end(); it++) {
-    content::WebContents* contents = (*it)->web_contents();
-    contents->WasHidden();
-  }
-#endif
-  // We can do something here... e.g., purge V8 memory
-  LOG(INFO) << "Let's do hidden work!"; 
-
-  callback.Run();
-}
-
-void AppVisibilityObserver::OnShow(const linked_ptr<ApplicationEvent>& event,
-    const base::Callback<void()>& callback) {
-#if 0
-  const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
-  xwalk::RuntimeList::const_iterator it = runtimes.begin();
-  for (; it != runtimes.end(); it++) {
-    content::WebContents* contents = (*it)->web_contents();
-    contents->WasShown();
-  }
-#endif
-  LOG(INFO) << "Let's do shown work!";
-  
-  callback.Run();
-}
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 ApplicationEvent::ApplicationEvent(const std::string& event_name,
@@ -134,11 +63,9 @@ ApplicationEventRouter::EventHandler::EventHandler(
 ////////////////////////////////////////////////////////////////////////////////
 static LifecycleEventPropagator* g_lifecycle_propagator;
 
-ApplicationEventRouter::ApplicationEventRouter(RuntimeContext* context) {
+ApplicationEventRouter::ApplicationEventRouter(xwalk::RuntimeContext* context) {
   //TODO where to put these propagators and observers??
   g_lifecycle_propagator = new LifecycleEventPropagator(context);
-  ApplicationEventObserver* visibilty_observer =
-    new AppVisibilityObserver(this, context);
 }
 
 void ApplicationEventRouter::AddObserver(
