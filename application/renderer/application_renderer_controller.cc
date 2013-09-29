@@ -20,12 +20,23 @@ namespace application {
 namespace {
 class RenderViewEventCallbacker : public content::RenderViewVisitor {
  public:
+  explicit RenderViewEventCallbacker(const std::string& event)
+    : event_(event) {
+  }
+
   bool Visit(content::RenderView* render_view) OVERRIDE;
+
+ private:
+  std::string event_;
 };
 
 bool RenderViewEventCallbacker::Visit(content::RenderView* render_view) {
-  std::string js = "if (xwalk.application.onShow) "
-                   "xwalk.application.onShow();";
+  std::string js = base::StringPrintf(
+      "if (xwalk.application.on%s)"
+      "  xwalk.application.on%s();",
+      event_.c_str(),
+      event_.c_str());
+
   string16 js16;
   UTF8ToUTF16(js.c_str(), js.length(), &js16);
   string16 frame_xpath;
@@ -53,7 +64,9 @@ bool ApplicationRendererController::OnControlMessageReceived(
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP(ApplicationRendererController, message)
     IPC_MESSAGE_HANDLER(ApplicationMsg_Launched, OnLaunched)
-    IPC_MESSAGE_HANDLER(ApplicationMsg_Show, OnShow)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_Suspend, OnSuspend)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_Resume, OnResume)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_Terminate, OnTerminate)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
@@ -69,13 +82,28 @@ void ApplicationRendererController::OnLaunched(
   }
 }
 
-void ApplicationRendererController::OnShow() {
+void ApplicationRendererController::OnSuspend() {
   //TODO make event object, register/callback framework.
-  
   //For now we just visit each render view's context and do callback if exist.
-  RenderViewEventCallbacker callbacker;
+  RenderViewEventCallbacker callbacker("suspend");
   content::RenderView::ForEach(&callbacker);
-  content::RenderThread::Get()->Send(new ApplicationMsg_ShowAck());
+  content::RenderThread::Get()->Send(new ApplicationMsg_SuspendAck);
+}
+
+void ApplicationRendererController::OnResume() {
+  //TODO make event object, register/callback framework.
+  //For now we just visit each render view's context and do callback if exist.
+  RenderViewEventCallbacker callbacker("resume");
+  content::RenderView::ForEach(&callbacker);
+  content::RenderThread::Get()->Send(new ApplicationMsg_ResumeAck);
+}
+
+void ApplicationRendererController::OnTerminate() {
+  //TODO make event object, register/callback framework.
+  //For now we just visit each render view's context and do callback if exist.
+  RenderViewEventCallbacker callbacker("terminate");
+  content::RenderView::ForEach(&callbacker);
+  content::RenderThread::Get()->Send(new ApplicationMsg_TerminateAck);
 }
 
 const Application*

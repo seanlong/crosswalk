@@ -27,9 +27,16 @@ class LifecycleEventPropagator : public content::NotificationObserver {
                        const content::NotificationDetails& details) OVERRIDE;
 
  private:
+  enum STATE {
+    RUNNING = 0,
+    SUSPENDED,
+    TERMINATING
+  };
+
   content::NotificationRegistrar registrar_;
   xwalk::RuntimeContext* runtime_context_;
   ApplicationEventRouter* router_;
+  STATE state_;
 };
 
 }

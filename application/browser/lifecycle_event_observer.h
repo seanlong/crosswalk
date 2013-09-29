@@ -16,11 +16,12 @@ class RuntimeContext;
 namespace xwalk {
 namespace application {
 
+// Common lifecycle event observer implementation.
 class LifecycleEventObserver : public ApplicationEventObserver,
-                              public content::BrowserMessageFilter {
+                               public content::BrowserMessageFilter {
  public:
   LifecycleEventObserver(
-      ApplicationEventRouter* router, RuntimeContext* context);
+      ApplicationEventRouter* router, xwalk::RuntimeContext* context);
 
   void RegisterEventHandlers() OVERRIDE;
 
@@ -29,15 +30,13 @@ class LifecycleEventObserver : public ApplicationEventObserver,
                                  bool* message_was_ok) OVERRIDE;
 
  private:
-  void OnHide(const linked_ptr<ApplicationEvent>& event,
-      const base::Callback<void()>& callback);
-  void OnShow(const linked_ptr<ApplicationEvent>& event,
-      const base::Callback<void()>& callback);
+  void OnEvent(const linked_ptr<ApplicationEvent>& event,
+               const base::Callback<void()>& callback);
 
-  void OnShowAck();
+  void OnEventAck();
 
   xwalk::RuntimeContext* runtime_context_;
-  base::Callback<void()> showack_callback_;
+  base::Callback<void()> event_router_callback_;;
 };
 
 }

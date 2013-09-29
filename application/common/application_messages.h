@@ -55,8 +55,11 @@ struct ParamTraits<ApplicationMsg_Launched_Params> {
 IPC_MESSAGE_CONTROL1(ApplicationMsg_Launched,  // NOLINT(*)
                      ApplicationMsg_Launched_Params)
 
-IPC_MESSAGE_CONTROL0(ApplicationMsg_Show)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_Suspend)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_SuspendAck)
 
-IPC_MESSAGE_CONTROL0(ApplicationMsg_ShowAck)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_Resume)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_ResumeAck)
 
-IPC_MESSAGE_CONTROL0(ApplicationMsg_Hide)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_Terminate)
+IPC_MESSAGE_CONTROL0(ApplicationMsg_TerminateAck)

@@ -32,8 +32,8 @@
         'browser/installer/xpk_package.h',
         'browser/lifecycle_event_observer.cc',
         'browser/lifecycle_event_observer.h',
-        'browser/lifecycle_event_propagator.cc',
-        'browser/lifecycle_event_propagator.h',
+        'browser/lifecycle_event_propagator_desktop.cc',
+        'browser/lifecycle_event_propagator_desktop.h',
 
         'common/application.cc',
         'common/application.h',

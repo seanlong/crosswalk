@@ -7,11 +7,6 @@
 #include <algorithm>
 
 #include "base/bind.h"
-#include "xwalk/application/browser/lifecycle_event_propagator.h"
-#include "xwalk/runtime/browser/runtime.h"
-#include "xwalk/runtime/browser/runtime_context.h"
-#include "xwalk/runtime/browser/runtime_registry.h"
-
 
 namespace xwalk {
 namespace application {
@@ -22,9 +17,11 @@ ApplicationEvent::ApplicationEvent(const std::string& event_name,
   : name(event_name),
     args(event_args.Pass()) {
   DCHECK(this->args.get());
+  printf("%s %d\n", __FUNCTION__, __LINE__);
 }
 
 ApplicationEvent::~ApplicationEvent() {
+  printf("%s %d\n", __FUNCTION__, __LINE__);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +199,6 @@ void ApplicationEventRouter::RemoveObserverEventHandlers(
       event_it++;
   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 ApplicationEventObserver::ApplicationEventObserver(

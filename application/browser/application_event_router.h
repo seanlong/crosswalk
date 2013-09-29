@@ -38,8 +38,6 @@ class ApplicationEventRouter {
  public:
   typedef base::Callback<void(const linked_ptr<ApplicationEvent>&,
       const base::Callback<void()>&)> EventHandlerCallback;
-  typedef std::deque<linked_ptr<ApplicationEvent> > EventQueue;
-  typedef std::list<ApplicationEventObserver*> ObserverList;
   
   class ObserverRegistrar {
    public:
@@ -69,6 +67,9 @@ class ApplicationEventRouter {
   FRIEND_TEST_ALL_PREFIXES(ApplicationEventRouterTest, ObserverRegistration);
   FRIEND_TEST_ALL_PREFIXES(ApplicationEventRouterTest, EventDispatch);
 
+  typedef std::deque<linked_ptr<ApplicationEvent> > EventQueue;
+  typedef std::list<ApplicationEventObserver*> ObserverList;
+  
   struct EventHandler {
     ApplicationEventObserver* owner;
     int priority;

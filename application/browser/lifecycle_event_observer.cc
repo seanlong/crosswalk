@@ -15,7 +15,6 @@
 
 using xwalk::Runtime;
 using xwalk::RuntimeContext;
-using xwalk::RuntimeRegistry;
 
 namespace xwalk {
 namespace application {
@@ -28,63 +27,55 @@ LifecycleEventObserver::LifecycleEventObserver(
 }
 
 void LifecycleEventObserver::RegisterEventHandlers() {
-  registrar_.AddEventHandler("HIDE", 0,
-      base::Bind(&LifecycleEventObserver::OnHide, base::Unretained(this)));
-  registrar_.AddEventHandler("SHOW", 0,
-      base::Bind(&LifecycleEventObserver::OnShow, base::Unretained(this)));
+  registrar_.AddEventHandler("SUSPEND", 10, //TODO max/min priority value.
+      base::Bind(&LifecycleEventObserver::OnEvent, base::Unretained(this)));
+  registrar_.AddEventHandler("RESUME", 10,
+      base::Bind(&LifecycleEventObserver::OnEvent, base::Unretained(this)));
+  registrar_.AddEventHandler("TERMINATE", 10,
+      base::Bind(&LifecycleEventObserver::OnEvent, base::Unretained(this)));
 }
 
 bool LifecycleEventObserver::OnMessageReceived(const IPC::Message& message,
-                                              bool* message_was_ok) {
+                                               bool* message_was_ok) {
   bool handled = true;
   IPC_BEGIN_MESSAGE_MAP_EX(LifecycleEventObserver, message, *message_was_ok)
-    IPC_MESSAGE_HANDLER(ApplicationMsg_ShowAck, OnShowAck)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_SuspendAck, OnEventAck)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_ResumeAck, OnEventAck)
+    IPC_MESSAGE_HANDLER(ApplicationMsg_TerminateAck, OnEventAck)
     IPC_MESSAGE_UNHANDLED(handled = false)
   IPC_END_MESSAGE_MAP()
 
   return handled;
 }
 
-void LifecycleEventObserver::OnHide(const linked_ptr<ApplicationEvent>& event,
-    const base::Callback<void()>& callback) {
-  // At present all Runtime instances belong to one application.
-#if 0
-  const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
-  xwalk::RuntimeList::const_iterator it = runtimes.begin();
-  for (; it != runtimes.end(); it++) {
-    content::WebContents* contents = (*it)->web_contents();
-    contents->WasHidden();
-  }
-#endif
-  // We can do something here... e.g., purge V8 memory
-  LOG(INFO) << "Let's do synchronous hidden work!"; 
-
-  callback.Run();
-}
-
-void LifecycleEventObserver::OnShow(const linked_ptr<ApplicationEvent>& event,
-    const base::Callback<void()>& callback) {
-#if 0
-  const xwalk::RuntimeList& runtimes = RuntimeRegistry::Get()->runtimes();
-  xwalk::RuntimeList::const_iterator it = runtimes.begin();
-  for (; it != runtimes.end(); it++) {
-    content::WebContents* contents = (*it)->web_contents();
-    contents->WasShown();
-  }
-#endif
-  // Test notifies renderer this event and run the callback after ack
-  LOG(INFO) << "Let's do asynchronous shown work!";
+void LifecycleEventObserver::OnEvent(const linked_ptr<ApplicationEvent>& event,
+                                     const base::Callback<void()>& callback) {
+  // We do common event handling here, e.g., trigger JS callback.
   ApplicationProcessManager* pm =
     runtime_context_->GetApplicationSystem()->process_manager();
+  // TODO send routed message to main document as lifecycle event should only be
+  // handled in main document.
   Runtime* main_runtime = pm->GetMainDocumentRuntime();
-  content::RenderViewHost* rvh = main_runtime->web_contents()->GetRenderViewHost();
-  rvh->Send(new ApplicationMsg_Show);
-  showack_callback_ = callback;
+  content::RenderViewHost* rvh =
+    main_runtime->web_contents()->GetRenderViewHost();
+  IPC::Message* msg = NULL;
+  if (event->name == "SUSPEND")
+    msg = new ApplicationMsg_Suspend;
+  else if (event->name == "RESUME")
+    msg = new ApplicationMsg_Resume;
+  else if (event->name == "TERMINATE")
+    msg = new ApplicationMsg_Terminate;
+  else
+    LOG(ERROR) << "Unknown event received:" << event->name;
+
+  if (msg) {
+    event_router_callback_ = callback;
+    rvh->Send(msg);
+  }
 }
 
-void LifecycleEventObserver::OnShowAck() {
-  LOG(INFO) << "Get show ack message from render.";
-  showack_callback_.Run(); 
+void LifecycleEventObserver::OnEventAck() {
+  event_router_callback_.Run();
 }
 
 }

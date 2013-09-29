@@ -36,7 +36,9 @@ class ApplicationRendererController : public content::RenderProcessObserver {
   ApplicationRendererController();
   virtual ~ApplicationRendererController();
   void OnLaunched(const ApplicationMsg_Launched_Params& launched_app);
-  void OnShow();
+  void OnSuspend();
+  void OnResume();
+  void OnTerminate();
 
   scoped_refptr<const Application> application_;
 

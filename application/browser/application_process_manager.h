@@ -16,7 +16,7 @@
 #include "base/time.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
-#include "xwalk/application/browser/lifecycle_event_propagator.h"
+#include "xwalk/application/browser/lifecycle_event_propagator_desktop.h"
 #include "xwalk/application/common/application.h"
 
 class GURL;

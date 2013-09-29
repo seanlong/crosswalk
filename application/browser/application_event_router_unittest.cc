@@ -184,7 +184,7 @@ TEST_F(ApplicationEventRouterTest, EventDispatch) {
 
   EXPECT_EQ(router.event_queue_.size(), 0);
   EXPECT_EQ(observer_1.GetHandlerCallCount(kMockEvent0), 2);
-  EXPECT_EQ(observer_2.GetHandlerCallCount(kMockEvent0), 1);
+  EXPECT_EQ(observer_2.GetHandlerCallCount(kMockEvent1), 1);
   // MockEvent0 will be blocked until MockEvent1's work is finished.
   EXPECT_EQ(observer_2.GetLastEventName(), kMockEvent0);
 }
