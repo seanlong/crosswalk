@@ -16,6 +16,7 @@
 #include "base/time.h"
 #include "content/public/browser/notification_observer.h"
 #include "content/public/browser/notification_registrar.h"
+#include "xwalk/application/browser/lifecycle_event_propagator.h"
 #include "xwalk/application/common/application.h"
 
 class GURL;
@@ -28,7 +29,6 @@ class RuntimeContext;
 namespace xwalk {
 namespace application {
 
-class ApplicationHost;
 class Manifest;
 
 // This manages dynamic state of running applications. By now, it only launches
@@ -51,6 +51,9 @@ class ApplicationProcessManager: public content::NotificationObserver {
  private:
   bool RunMainDocument(const Application* application);
   bool RunFromLocalPath(const Application* application);
+
+  // FIXME is it a good place holding this??
+  scoped_ptr<LifecycleEventPropagator> lifecycle_event_propagator_;
 
   xwalk::RuntimeContext* runtime_context_;
   xwalk::Runtime* main_runtime_;

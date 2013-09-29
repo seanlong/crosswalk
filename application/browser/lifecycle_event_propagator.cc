@@ -1,4 +1,4 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
+// Copyright (c) 2013 Intel Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -44,7 +44,7 @@ void LifecycleEventPropagator::Observe(int type,
           break;
         }
       }
-      // if all windows are become visible then send SHOW event,
+      // if one window is become visible then send SHOW event,
       // if all windows are become invisible then send HIDE event.
       if (it == runtimes.end()) {
         const char* event_name = visible ? "SHOW" : "HIDE";

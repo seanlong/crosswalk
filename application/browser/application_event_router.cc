@@ -1,4 +1,4 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
+// Copyright (c) 2013 Intel Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -22,6 +22,9 @@ ApplicationEvent::ApplicationEvent(const std::string& event_name,
   : name(event_name),
     args(event_args.Pass()) {
   DCHECK(this->args.get());
+}
+
+ApplicationEvent::~ApplicationEvent() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -61,11 +64,8 @@ ApplicationEventRouter::EventHandler::EventHandler(
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-static LifecycleEventPropagator* g_lifecycle_propagator;
 
-ApplicationEventRouter::ApplicationEventRouter(xwalk::RuntimeContext* context) {
-  //TODO where to put these propagators and observers??
-  g_lifecycle_propagator = new LifecycleEventPropagator(context);
+ApplicationEventRouter::ApplicationEventRouter() {
 }
 
 void ApplicationEventRouter::AddObserver(
@@ -92,7 +92,7 @@ void ApplicationEventRouter::RemoveObserver(
 
 void ApplicationEventRouter::QueueEvent(scoped_ptr<ApplicationEvent> event) {
   event_queue_.push_back(linked_ptr<ApplicationEvent>(event.release()));
-  // The router is idle, then let's start it.
+  // If the router is idle, then let's start it.
   if (event_queue_.size() == 1) {
     DispatchEvent(event_queue_.front());
   }
@@ -152,7 +152,7 @@ void ApplicationEventRouter::AddEventHandler(ApplicationEventObserver* observer,
   HandlerList& handlers = handlers_map_[event_name];
   HandlerList::iterator it = handlers.begin();
   for (; it != handlers.end(); it++) {
-    if (it->priority > priority)
+    if (it->priority < priority)
       break;
   } 
   EventHandler handler(observer, priority, callback);
@@ -187,7 +187,7 @@ void ApplicationEventRouter::RemoveEventHandler(
 void ApplicationEventRouter::RemoveObserverEventHandlers(
     ApplicationEventObserver* observer) {
   EventHandlerMap::iterator event_it = handlers_map_.begin();
-  for (; event_it != handlers_map_.end(); event_it++) {
+  for (; event_it != handlers_map_.end(); ) {
     HandlerList& handlers = event_it->second;
     HandlerList::iterator handler_it = handlers.begin();
     while (handler_it != handlers.end()) {
@@ -196,6 +196,10 @@ void ApplicationEventRouter::RemoveObserverEventHandlers(
       else
         ++handler_it;
     }
+    if (handlers.empty())
+      handlers_map_.erase(event_it++);
+    else
+      event_it++;
   }
 }
 
@@ -204,7 +208,7 @@ void ApplicationEventRouter::RemoveObserverEventHandlers(
 ApplicationEventObserver::ApplicationEventObserver(
     ApplicationEventRouter* router)
   : registrar_(router) {
-}  
+}
 
 ApplicationEventObserver::~ApplicationEventObserver() {
 }

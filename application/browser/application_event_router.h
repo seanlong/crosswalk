@@ -1,4 +1,4 @@
-// Copyright (c) 2011 The Chromium Authors. All rights reserved.
+// Copyright (c) 2013 Intel Corporation. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
@@ -11,6 +11,7 @@
 #include <list>
 
 #include "base/callback.h"
+#include "base/gtest_prod_util.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/ref_counted.h"
 #include "base/values.h"
@@ -30,12 +31,15 @@ struct ApplicationEvent {
 
   ApplicationEvent(const std::string& event_name,
                    scoped_ptr<base::ListValue> event_args);
+  ~ApplicationEvent();
 };
 
 class ApplicationEventRouter {
  public:
   typedef base::Callback<void(const linked_ptr<ApplicationEvent>&,
       const base::Callback<void()>&)> EventHandlerCallback;
+  typedef std::deque<linked_ptr<ApplicationEvent> > EventQueue;
+  typedef std::list<ApplicationEventObserver*> ObserverList;
   
   class ObserverRegistrar {
    public:
@@ -53,7 +57,7 @@ class ApplicationEventRouter {
     ApplicationEventObserver* owner_;
   };
 
-  ApplicationEventRouter(xwalk::RuntimeContext* runtime_context);
+  ApplicationEventRouter();
   ~ApplicationEventRouter() {}
 
   void AddObserver(ApplicationEventObserver* observer);
@@ -62,6 +66,9 @@ class ApplicationEventRouter {
   void DispatchEvent(linked_ptr<ApplicationEvent>& event);
 
  private:
+  FRIEND_TEST_ALL_PREFIXES(ApplicationEventRouterTest, ObserverRegistration);
+  FRIEND_TEST_ALL_PREFIXES(ApplicationEventRouterTest, EventDispatch);
+
   struct EventHandler {
     ApplicationEventObserver* owner;
     int priority;
@@ -80,13 +87,12 @@ class ApplicationEventRouter {
   void RemoveObserverEventHandlers(ApplicationEventObserver* observer);
   void ProceedHandler();
 
-  typedef std::list<ApplicationEventObserver*> ObserverList;
   typedef std::list<EventHandler> HandlerList;
   typedef std::map<const std::string, HandlerList> EventHandlerMap;
 
   EventHandlerMap handlers_map_;
   ObserverList observers_;
-  std::deque<linked_ptr<ApplicationEvent> > event_queue_;
+  EventQueue event_queue_;
 
   // Save intermediate states for handlers' asynchronous processing.
   linked_ptr<ApplicationEvent> cur_event_;

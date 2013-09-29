@@ -30,6 +30,8 @@ ApplicationProcessManager::ApplicationProcessManager(
       weak_ptr_factory_(this) {
   registrar_.Add(this, content::NOTIFICATION_RENDERER_PROCESS_CREATED,
       content::NotificationService::AllBrowserContextsAndSources());
+  lifecycle_event_propagator_.reset(
+      new LifecycleEventPropagator(runtime_context));
 }
 
 ApplicationProcessManager::~ApplicationProcessManager() {
