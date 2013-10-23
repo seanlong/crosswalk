@@ -6,6 +6,7 @@
 #define XWALK_APPLICATION_EXTENSION_APPLICATION_EXTENSION_H_
 
 #include <string>
+#include <vector>
 
 #include "base/threading/thread_checker.h"
 #include "xwalk/extensions/browser/xwalk_extension_function_handler.h"
@@ -45,7 +46,8 @@ class ApplicationExtensionInstance : public XWalkExtensionInstance {
  private:
   void OnGetMainDocumentID(scoped_ptr<XWalkExtensionFunctionInfo> info);
   void OnGetManifest(scoped_ptr<XWalkExtensionFunctionInfo> info);
-
+  void OnRegisterEvent(scoped_ptr<XWalkExtensionFunctionInfo> info);
+  void OnUnregisterEvent(scoped_ptr<XWalkExtensionFunctionInfo> info);
 
   // Get main document routing ID from ApplicationProcessManager on UI thread.
   void GetMainDocumentID(int* main_routing_id);
@@ -61,6 +63,8 @@ class ApplicationExtensionInstance : public XWalkExtensionInstance {
   application::ApplicationSystem* application_system_;
 
   base::ThreadChecker thread_checker_;
+
+  std::vector<std::string> registered_events_;
 
   XWalkExtensionFunctionHandler handler_;
 };

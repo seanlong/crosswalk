@@ -46,6 +46,14 @@ ApplicationExtensionInstance::ApplicationExtensionInstance(
       "getMainDocumentID",
       base::Bind(&ApplicationExtensionInstance::OnGetMainDocumentID,
                  base::Unretained(this)));
+  handler_.Register(
+      "registerEvent",
+      base::Bind(&ApplicationExtensionInstance::OnRegisterEvent,
+                 base::Unretained(this)));
+  handler_.Register(
+      "unregisterEvent",
+      base::Bind(&ApplicationExtensionInstance::OnUnregisterEvent,
+                 base::Unretained(this)));
 }
 
 void ApplicationExtensionInstance::HandleMessage(scoped_ptr<base::Value> msg) {
@@ -80,6 +88,42 @@ void ApplicationExtensionInstance::OnGetMainDocumentID(
                  base::Unretained(this),
                  base::Passed(&info),
                  base::Owned(main_routing_id)));
+}
+
+void ApplicationExtensionInstance::OnRegisterEvent(
+    scoped_ptr<XWalkExtensionFunctionInfo> info) {
+  std::string event_name;
+  if (info->arguments()->GetSize() != 1 ||
+      !info->arguments()->GetString(0, &event_name))
+    return;
+
+  std::vector<std::string>::iterator it =
+    std::find(registered_events_.begin(), registered_events_.end(), event_name);
+  if (it == registered_events_.end()) {
+    registered_events_.push_back(event_name);
+    // TODO(xiang): add to EventRouter's observer list.
+
+    // TODO(xiang): if the event is registered from main document, we also need
+    // to save it to app prefs, then we can load the main document if such event
+    // happens when the application is not running yet.
+  }
+}
+
+void ApplicationExtensionInstance::OnUnregisterEvent(
+    scoped_ptr<XWalkExtensionFunctionInfo> info) {
+  std::string event_name;
+  if (info->arguments()->GetSize() != 1 ||
+      !info->arguments()->GetString(0, &event_name))
+    return;
+
+  std::vector<std::string>::iterator it =
+    std::find(registered_events_.begin(), registered_events_.end(), event_name);
+  if (it != registered_events_.end()) {
+    registered_events_.erase(it);
+    // TODO(xiang): remove from EventRouter's observer list.
+
+    // TODO(xiang): remove from the app prefs if it's called from main document.
+  }
 }
 
 void ApplicationExtensionInstance::GetManifest(

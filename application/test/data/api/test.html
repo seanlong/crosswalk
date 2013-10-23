@@ -49,7 +49,30 @@
             runNextTest();
           });
         });
+      },
+
+      function testEventObject() {
+        runTestCase(function() {
+          function dummy() {};
+          var onAlarm = new xwalk.app.Event("onAlarm");
+          var onAlarm2 = new xwalk.app.Event("onAlarm");
+          onAlarm.addListener(dummy);
+          assert(onAlarm.hasListeners());
+          onAlarm.removeListener(dummy);
+          assert(!onAlarm.hasListeners());
+
+          // Register a named event twice should fail.
+          onAlarm.addListener(dummy);
+          try {
+            onAlarm2.addListener(dummy);
+            assert(false);
+          } catch (e) {
+            assert(e.message.search("already registered") >= 0);
+          }
+          runNextTest();
+        });
       }
+
     ];
 
     var currIdx = 0;
