@@ -39,7 +39,7 @@ EventHandler::EventHandler(const std::string& event_name,
   : event_name_(event_name),
     app_id_(app_id),
     callback_(callback),
-    owner_(owner),
+    weak_owner_(owner),
     priority_(priority) {
   CHECK(base::MessageLoop::current());
   loop_ = base::MessageLoopProxy::current();
@@ -47,7 +47,7 @@ EventHandler::EventHandler(const std::string& event_name,
 }
 
 EventHandler::~EventHandler() {
-  printf("%s %d\n", __FUNCTION__, __LINE__);
+  printf("%s %d %p\n", __FUNCTION__, __LINE__, this);
 }
 
 void EventHandler::Notify(
@@ -59,10 +59,11 @@ void EventHandler::Notify(
 
 void EventHandler::Run(
     scoped_refptr<Event> event, const HandlerFinishCallback& finish_cb) {
-  if (owner_)
+//    printf("%s %d %p\n", __FUNCTION__, __LINE__, this);
+  if (weak_owner_) {
     callback_.Run(event, finish_cb);
-  else {
-    printf("%s %d\n", __FUNCTION__, __LINE__);
+  } else {
+    finish_cb.Run();
   }
 }
 
@@ -157,8 +158,12 @@ void ApplicationEventRouter::RemoveEventHandler(
   HandlerList::iterator it = handlers.begin();
   for (; it != handlers.end(); it++) {
     if ((*it)->Equals(*handler)) {
-      if (running_events_[event_name] == it)
-        ++running_events_[event_name];
+      // If the event handler is already running, then mark it for removing in
+      // the finish callback.
+      if (running_events_[event_name] == it) {
+        removing_events_[event_name] = it;
+        break;
+      }
       handlers.erase(it);
       break;
     }
@@ -221,7 +226,12 @@ void ApplicationEventRouter::OnFinishHandler(
 
   HandlerList& handlers = handlers_map_[event->name];
   HandlerList::iterator cur_handler_it = running_events_[event->name];
-  if (cur_handler_it == handlers.end() || ++cur_handler_it == handlers.end()) {
+  HandlerList::iterator tmp_it = cur_handler_it++;
+  if (removing_events_.find(event->name) != removing_events_.end() &&
+      tmp_it == removing_events_[event->name])
+    handlers.erase(removing_events_[event->name]);
+
+  if (cur_handler_it == handlers.end()) {
     running_events_.erase(event->name);
   } else {
     (*cur_handler_it)->Notify(event,

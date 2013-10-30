@@ -93,7 +93,7 @@ class EventHandler {
   // The application who owns the handler.
   std::string app_id_;
 
-  base::WeakPtr<EventHandlerOwner> owner_;
+  base::WeakPtr<EventHandlerOwner> weak_owner_;
 
   int id_;
 
@@ -174,12 +174,13 @@ class ApplicationEventRouter {
   typedef std::list<linked_ptr<EventHandler> > HandlerList;
   typedef std::map<std::string, HandlerList> EventHandlerMap;
   typedef std::vector<scoped_refptr<Event> > LazyEvents;
-  typedef std::map<std::string, HandlerList::iterator> RunningHandlerMap;
+  typedef std::map<std::string, HandlerList::iterator> HandlerItMap;
 
   std::map<std::string, int> handlers_id_map_;
   EventHandlerMap handlers_map_;
   LazyEvents lazy_events_;
-  RunningHandlerMap running_events_;
+  HandlerItMap running_events_;
+  HandlerItMap removing_events_;
 
   scoped_ptr<MainDocObserver> main_observer_;
   

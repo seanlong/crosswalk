@@ -36,9 +36,12 @@ Event.dispatchEvent = function(eventName, args) {
   if (!evt)
     return;
 
+  // Make a copy of the listeners in case the listener list is modified during 
+  // the iteration.
+  var listeners = evt.listeners.slice();
   var results = [];
-  for (var i = 0; i < evt.listeners.length; i++) {
-    var result = evt.listeners[i].apply(null, args);
+  for (var i = 0; i < listeners.length; i++) {
+    var result = listeners[i].apply(null, args);
     if (result !== undefined)
       results.push(result);
   }
