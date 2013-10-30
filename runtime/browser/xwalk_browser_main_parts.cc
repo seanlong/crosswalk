@@ -13,6 +13,7 @@
 #include "base/files/file_path.h"
 #include "base/message_loop/message_loop.h"
 #include "base/strings/string_number_conversions.h"
+#include "xwalk/application/browser/application_event_router.h"
 #include "xwalk/application/browser/application_service.h"
 #include "xwalk/application/browser/application_system.h"
 #include "xwalk/application/common/application.h"
@@ -254,6 +255,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
       runtime_context_->GetApplicationSystem();
   xwalk::application::ApplicationService* service =
       system->application_service();
+  xwalk::application::ApplicationEventRouter* event_router =
+      system->event_router();
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
   if (command_line->HasSwitch(switches::kRemoteDebuggingPort)) {
@@ -293,7 +296,9 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
 #endif  // OS_TIZEN_MOBILE
 
     if (xwalk::application::Application::IsIDValid(command_name)) {
-      run_default_message_loop_ = service->Launch(command_name);
+//      run_default_message_loop_ = service->Launch(command_name);
+      run_default_message_loop_ =
+        event_router->DispatchOnLaunchedEvent(command_name);
       return;
     }
 
@@ -320,7 +325,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
           LOG(INFO) << "[OK] Application uninstalled successfully: " << id;
         run_default_message_loop_ = false;
       } else {
-        run_default_message_loop_ = service->Launch(id);
+//        run_default_message_loop_ = service->Launch(id);
+        run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(id);
       }
       return;
     }
@@ -348,7 +354,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
       run_default_message_loop_ = false;
       return;
     } else if (base::DirectoryExists(path)) {
-      run_default_message_loop_ = service->Launch(path);
+      //run_default_message_loop_ = service->Launch(path);
+      run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(path);
       return;
     }
   }

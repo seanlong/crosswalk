@@ -9,6 +9,7 @@
 
 #include "base/memory/ref_counted.h"
 #include "base/memory/scoped_ptr.h"
+#include "xwalk/application/browser/application_event_router.h"
 #include "xwalk/application/browser/application_process_manager.h"
 #include "xwalk/application/browser/application_service.h"
 
@@ -38,10 +39,15 @@ class ApplicationSystem {
     return application_service_.get();
   }
 
+  ApplicationEventRouter* event_router() {
+    return event_router_.get();
+  }
+
  private:
   xwalk::RuntimeContext* runtime_context_;
   scoped_ptr<ApplicationProcessManager> process_manager_;
   scoped_ptr<ApplicationService> application_service_;
+  scoped_ptr<ApplicationEventRouter> event_router_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationSystem);
 };

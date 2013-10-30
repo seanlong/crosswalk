@@ -31,17 +31,28 @@ class ApplicationService {
   bool Uninstall(const std::string& id);
   bool Launch(const std::string& id);
   bool Launch(const base::FilePath& path);
+  scoped_refptr<const Application> Load(const base::FilePath& path);
 
+  // Find application with |id| in installed and loaded ones.
   scoped_refptr<const Application> GetApplicationByID(
-       const std::string& id) const;
+      const std::string& id) const;
+
   ApplicationStore::ApplicationMap* GetInstalledApplications() const;
+
   // Currently there's only one running application at a time.
   const Application* GetRunningApplication() const;
 
  private:
+  typedef std::map<std::string, scoped_refptr<const Application> >
+      ApplicationMap;
+
+  // Dynamically loaded applications wich are not installed. Application
+  // launched by its directory in the command line belongs to this type.
+  ApplicationMap loaded_applications_;
+
   xwalk::RuntimeContext* runtime_context_;
   scoped_ptr<ApplicationStore> app_store_;
-  scoped_refptr<const Application> application_;
+  scoped_refptr<const Application> active_application_;
 
   DISALLOW_COPY_AND_ASSIGN(ApplicationService);
 };

@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "xwalk/application/browser/application_system.h"
 #include "xwalk/application/common/application_manifest_constants.h"
 #include "xwalk/application/common/constants.h"
 #include "xwalk/runtime/browser/runtime.h"
@@ -69,6 +70,11 @@ bool ApplicationProcessManager::RunMainDocument(
   }
 
   main_runtime_ = Runtime::Create(runtime_context_, url);
+  ApplicationEventRouter* router =
+      runtime_context_->GetApplicationSystem()->event_router();
+  router->OnMainDocumentCreated(
+      application->ID(), main_runtime_->web_contents());
+
   return true;
 }
 

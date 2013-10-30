@@ -15,6 +15,8 @@
 
 using content::BrowserThread;
 
+using xwalk::application::ApplicationProcessManager;
+
 // This will be generated from application_api.js.
 extern const char kSource_application_api[];
 
@@ -37,7 +39,13 @@ XWalkExtensionInstance* ApplicationExtension::CreateInstance() {
 ApplicationExtensionInstance::ApplicationExtensionInstance(
     application::ApplicationSystem* application_system)
   : application_system_(application_system),
-    handler_(this) {
+    handler_(this),
+    weak_ptr_factory_(this) {
+  application_ =
+      application_system_->application_service()->GetRunningApplication();
+  event_callback_ = base::Bind(
+      &ApplicationExtensionInstance::OnEventReceived, base::Unretained(this));
+  
   handler_.Register(
       "getManifest",
       base::Bind(&ApplicationExtensionInstance::OnGetManifest,
@@ -54,6 +62,19 @@ ApplicationExtensionInstance::ApplicationExtensionInstance(
       "unregisterEvent",
       base::Bind(&ApplicationExtensionInstance::OnUnregisterEvent,
                  base::Unretained(this)));
+  handler_.Register(
+      "dispatchEventFinish",
+      base::Bind(&ApplicationExtensionInstance::OnDispatchEventFinish,
+                 base::Unretained(this)));
+}
+
+ApplicationExtensionInstance::~ApplicationExtensionInstance() {
+  std::set<std::string>::iterator it = registered_events_.begin();
+  while (it != registered_events_.end()) {
+    const std::string& event_name = *it;
+    ++it;
+    RemoveEventHandler(event_name);
+  }
 }
 
 void ApplicationExtensionInstance::HandleMessage(scoped_ptr<base::Value> msg) {
@@ -97,16 +118,9 @@ void ApplicationExtensionInstance::OnRegisterEvent(
       !info->arguments()->GetString(0, &event_name))
     return;
 
-  std::vector<std::string>::iterator it =
-    std::find(registered_events_.begin(), registered_events_.end(), event_name);
-  if (it == registered_events_.end()) {
-    registered_events_.push_back(event_name);
-    // TODO(xiang): add to EventRouter's observer list.
-
-    // TODO(xiang): if the event is registered from main document, we also need
-    // to save it to app prefs, then we can load the main document if such event
-    // happens when the application is not running yet.
-  }
+  std::set<std::string>::iterator it = registered_events_.find(event_name);
+  if (it == registered_events_.end())
+    AddEventHandler(event_name);
 }
 
 void ApplicationExtensionInstance::OnUnregisterEvent(
@@ -116,14 +130,49 @@ void ApplicationExtensionInstance::OnUnregisterEvent(
       !info->arguments()->GetString(0, &event_name))
     return;
 
-  std::vector<std::string>::iterator it =
-    std::find(registered_events_.begin(), registered_events_.end(), event_name);
-  if (it != registered_events_.end()) {
-    registered_events_.erase(it);
-    // TODO(xiang): remove from EventRouter's observer list.
+  std::set<std::string>::iterator it = registered_events_.find(event_name);
+  if (it != registered_events_.end())
+    RemoveEventHandler(event_name);
+}
 
-    // TODO(xiang): remove from the app prefs if it's called from main document.
-  }
+void ApplicationExtensionInstance::AddEventHandler(
+  const std::string& event_name) {
+  application::ApplicationEventRouter* router =
+      application_system_->event_router();
+  
+  registered_events_.insert(event_name);
+  scoped_ptr<EventHandler> handler(new EventHandler(
+        event_name, application_->ID(),event_callback_,
+        weak_ptr_factory_.GetWeakPtr()));
+  router->AddEventHandler(handler.Pass());
+
+  //TODO(xiang): save event registered from main document.
+}
+
+void ApplicationExtensionInstance::RemoveEventHandler(
+    const std::string& event_name) {
+  application::ApplicationEventRouter* router =
+      application_system_->event_router();
+  
+  scoped_ptr<EventHandler> handler(new EventHandler(
+        event_name, application_->ID(), event_callback_,
+        weak_ptr_factory_.GetWeakPtr()));
+  router->RemoveEventHandler(handler.Pass());
+
+  registered_events_.erase(event_name);
+
+  // TODO(xiang): delete event unregistered from main document.
+}
+
+void ApplicationExtensionInstance::OnDispatchEventFinish(
+    scoped_ptr<XWalkExtensionFunctionInfo> info) {
+  std::string event_name;
+  if (info->arguments()->GetSize() != 1 ||
+      !info->arguments()->GetString(0, &event_name))
+    return;
+
+  pending_callbacks_[event_name].Run();
+  pending_callbacks_.erase(event_name);
 }
 
 void ApplicationExtensionInstance::GetManifest(
@@ -134,6 +183,14 @@ void ApplicationExtensionInstance::GetManifest(
   const application::Application* app = service->GetRunningApplication();
   if (app)
     *manifest_data = app->GetManifest()->value()->DeepCopy();
+
+#if 0
+//Test only
+  application::ApplicationEventRouter* router =
+      application_system_->event_router();
+  scoped_ptr<base::ListValue> args(new base::ListValue());
+  router->DispatchEventToApp(application_->ID(), new Event("onTestEvent", args.Pass()));
+#endif
 }
 
 void ApplicationExtensionInstance::PostManifest(
@@ -164,6 +221,17 @@ void ApplicationExtensionInstance::PostMainDocumentID(
   scoped_ptr<base::ListValue> results(new base::ListValue());
   results->AppendInteger(*main_routing_id);
   info->PostResult(results.Pass());
+}
+
+void ApplicationExtensionInstance::OnEventReceived(
+    scoped_refptr<Event> event,
+    const EventHandler::HandlerFinishCallback& callback) {
+  scoped_ptr<base::DictionaryValue> msg(new base::DictionaryValue());
+  msg->Set("cmd", new StringValue("dispatchEvent"));
+  msg->Set("event", new StringValue(event->name));
+
+  PostMessageToJS(msg.PassAs<base::Value>()); 
+  pending_callbacks_[event->name] = callback;
 }
 
 }  // namespace xwalk

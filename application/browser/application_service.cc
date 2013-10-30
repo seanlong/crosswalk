@@ -121,29 +121,37 @@ bool ApplicationService::Launch(const std::string& id) {
     return false;
   }
 
-  application_ = application;
+  active_application_ = application;
   return runtime_context_->GetApplicationSystem()->
       process_manager()->LaunchApplication(runtime_context_,
                                            application.get());
 }
 
 bool ApplicationService::Launch(const base::FilePath& path) {
-  if (!base::DirectoryExists(path))
+  active_application_ = Load(path);
+  if (!active_application_)
     return false;
 
-  std::string error;
-  scoped_refptr<const Application> application =
-      LoadApplication(path, Manifest::COMMAND_LINE, &error);
-
-  if (!application) {
-    LOG(ERROR) << "Error during launch application: " << error;
-    return false;
-  }
-
-  application_ = application;
   return runtime_context_->GetApplicationSystem()->
       process_manager()->LaunchApplication(runtime_context_,
-                                           application.get());
+                                           active_application_.get());
+}
+
+scoped_refptr<const Application> ApplicationService::Load(
+    const base::FilePath& path) {
+  if (!base::DirectoryExists(path))
+    return NULL;
+
+  std::string error;
+  scoped_refptr<const Application> app =
+    LoadApplication(path, Manifest::COMMAND_LINE, &error);
+  if (!app) {
+    LOG(ERROR) << "Error during load application: " << error;
+    return NULL;
+  }
+
+  loaded_applications_[app->ID()] = app;
+  return app;
 }
 
 ApplicationStore::ApplicationMap*
@@ -153,11 +161,19 @@ ApplicationService::GetInstalledApplications() const {
 
 scoped_refptr<const Application> ApplicationService::GetApplicationByID(
     const std::string& id) const {
-  return app_store_->GetApplicationByID(id);
+  scoped_refptr<const Application> app = app_store_->GetApplicationByID(id);
+  if (app)
+    return app;
+
+  ApplicationMap::const_iterator it = loaded_applications_.find(id);
+  if (it != loaded_applications_.end())
+    return it->second;
+  else
+    return NULL;
 }
 
 const Application* ApplicationService::GetRunningApplication() const {
-  return application_.get();
+  return active_application_;
 }
 
 }  // namespace application

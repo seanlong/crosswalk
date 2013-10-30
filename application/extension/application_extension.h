@@ -8,15 +8,22 @@
 #include <string>
 #include <vector>
 
+#include "base/memory/weak_ptr.h"
 #include "base/threading/thread_checker.h"
+#include "xwalk/application/browser/application_event_router.h"
 #include "xwalk/extensions/browser/xwalk_extension_function_handler.h"
 #include "xwalk/extensions/common/xwalk_extension.h"
 
 namespace xwalk {
 
 namespace application {
+class Application;
 class ApplicationSystem;
 }
+
+using application::Event;
+using application::EventHandler;
+using application::EventHandlerOwner;
 
 using extensions::XWalkExtension;
 using extensions::XWalkExtensionFunctionHandler;
@@ -36,18 +43,23 @@ class ApplicationExtension : public XWalkExtension {
   application::ApplicationSystem* application_system_;
 };
 
-class ApplicationExtensionInstance : public XWalkExtensionInstance {
+class ApplicationExtensionInstance : public XWalkExtensionInstance,
+                                     public EventHandlerOwner {
  public:
   explicit ApplicationExtensionInstance(
       application::ApplicationSystem* application_system);
 
+  ~ApplicationExtensionInstance();
+
   virtual void HandleMessage(scoped_ptr<base::Value> msg) OVERRIDE;
 
  private:
+  // Registered handlers for incoming JS messages.
   void OnGetMainDocumentID(scoped_ptr<XWalkExtensionFunctionInfo> info);
   void OnGetManifest(scoped_ptr<XWalkExtensionFunctionInfo> info);
   void OnRegisterEvent(scoped_ptr<XWalkExtensionFunctionInfo> info);
   void OnUnregisterEvent(scoped_ptr<XWalkExtensionFunctionInfo> info);
+  void OnDispatchEventFinish(scoped_ptr<XWalkExtensionFunctionInfo> info);
 
   // Get main document routing ID from ApplicationProcessManager on UI thread.
   void GetMainDocumentID(int* main_routing_id);
@@ -60,13 +72,27 @@ class ApplicationExtensionInstance : public XWalkExtensionInstance {
   void PostManifest(scoped_ptr<XWalkExtensionFunctionInfo> info,
                     base::DictionaryValue** manifest_data);
 
+  // Add/remove an event's handler from this instance.
+  void AddEventHandler(const std::string& event_name);
+  void RemoveEventHandler(const std::string& event_name);
+
+  // Common event receiving callback.
+  void OnEventReceived(
+     scoped_refptr<application::Event> event,
+     const EventHandler::HandlerFinishCallback& callback);
+ 
+  const application::Application* application_;
   application::ApplicationSystem* application_system_;
 
+  EventHandler::HandlerCallback event_callback_;
+  std::set<std::string> registered_events_;
+  std::map<std::string, EventHandler::HandlerFinishCallback> pending_callbacks_;
+ 
   base::ThreadChecker thread_checker_;
-
-  std::vector<std::string> registered_events_;
-
+ 
   XWalkExtensionFunctionHandler handler_;
+  
+  base::WeakPtrFactory<ApplicationExtensionInstance> weak_ptr_factory_;
 };
 
 }  // namespace xwalk

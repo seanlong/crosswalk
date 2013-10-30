@@ -4,16 +4,27 @@
 
 var application = requireNative('application');
 
-var internal = requireNative("internal");
-internal.setupInternalExtension(extension);
+var callback_listeners = {};
+var callback_id = 0;
+
+// Common message handler to handle both event dispatch and API callbacks.
+extension.setMessageListener(function(msg) {
+  if (msg && msg.cmd == "dispatchEvent")
+    xwalk.app.Event.dispatchEvent(msg.event, []);
+  else {
+    var args = msg;
+    var id = args.shift();
+    var listener = callback_listeners[id];
+    if (listener !== undefined) {
+      listener.apply(null, args);
+      delete callback_listeners[id];
+    }
+  }
+});
 
 // Event API.
 // A map of event names to the event object that is registered to that name.
 var registeredEvents = {};
-
-var postMessage = function(msg) {
-  extension.postMessage(JSON.stringify(msg));
-};
 
 var Event = function(eventName) {
   this.eventName = eventName; 
@@ -27,12 +38,14 @@ Event.dispatchEvent = function(eventName, args) {
 
   var results = [];
   for (var i = 0; i < evt.listeners.length; i++) {
-    result = evt.listeners[i].apply(null, args);
+    var result = evt.listeners[i].apply(null, args);
     if (result !== undefined)
       results.push(result);
   }
+
+  extension.postMessage(['dispatchEventFinish', "", eventName]);
   if (results.length)
-    return {results: results};
+    return {"results": results};
 };
 
 Event.prototype.addListener = function(callback) {
@@ -40,7 +53,7 @@ Event.prototype.addListener = function(callback) {
     if (registeredEvents[this.eventName])
       throw new Error('Event:' + this.eventName + ' is already registered.');
     registeredEvents[this.eventName] = this;
-    internal.postMessage('registerEvent', [this.eventName]);
+    extension.postMessage(['registerEvent', "", this.eventName]);
   }
 
   if (!this.hasListener(callback))
@@ -54,9 +67,9 @@ Event.prototype.removeListener = function(callback) {
   }
   if (i != this.listeners.length)
     this.listeners.splice(i, 1);
-  
+
   if (this.listeners.length == 0) {
-    internal.postMessage('unregisterEvent', [this.eventName]);
+    extension.postMessage(['unregisterEvent', "", this.eventName]);
     if (!registeredEvents[this.eventName])
       throw new Error('Event:' + this.eventName + ' is not registered.');
     delete registeredEvents[this.eventName];
@@ -68,7 +81,7 @@ Event.prototype.hasListener = function(callback) {
     if (this.listeners[i] == callback)
       break;
   }
-  
+
   return i != this.listeners.length;
 };
 
@@ -78,14 +91,22 @@ Event.prototype.hasListeners = function() {
 
 // Exported APIs.
 exports.getManifest = function(callback) {
-  internal.postMessage('getManifest', [], callback);
+  var id = (callback_id++).toString();
+  callback_listeners[id] = callback;
+  extension.postMessage(['getManifest', id]);
 };
 
 exports.getMainDocument = function(callback) {
-  internal.postMessage('getMainDocumentID', [], function(routing_id) {
+  var callback_ = function(routing_id) {
     var md = application.getViewByID(routing_id);
     callback(md);
-  });
+  };
+
+  var id = (callback_id++).toString();
+  callback_listeners[id] = callback_;
+  extension.postMessage(['getMainDocumentID', id]);
 };
 
 exports.Event = Event;
+
+exports.onLaunched = new Event("app.onLaunched");

@@ -105,7 +105,7 @@ void XWalkExtensionFunctionHandler::DispatchResult(
     DLOG(WARNING) << "Sending a reply with an empty callback id has no"
         "practical effect. This code can be optimized by not creating "
         "and not posting the result.";
-    return;
+   return;
   }
 
   // Prepend the callback id to the list, so the handlers
