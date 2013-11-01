@@ -26,11 +26,11 @@ Event::Event(
   : name(event_name),
     args(event_args.Pass()) {
   DCHECK(this->args.get());
-  printf("%s %d\n", __FUNCTION__, __LINE__);
+  //printf("%s %d\n", __FUNCTION__, __LINE__);
 }
 
 Event::~Event() {
-  printf("%s %d %s\n", __FUNCTION__, __LINE__, name.c_str());
+  //printf("%s %d %s\n", __FUNCTION__, __LINE__, name.c_str());
 }
 
 EventHandler::EventHandler(const std::string& event_name,
@@ -45,11 +45,11 @@ EventHandler::EventHandler(const std::string& event_name,
     priority_(priority) {
   CHECK(base::MessageLoop::current());
   loop_ = base::MessageLoopProxy::current();
-  printf("%s %d %s\n", __FUNCTION__, __LINE__, event_name_.c_str());
+  //printf("%s %d %s\n", __FUNCTION__, __LINE__, event_name_.c_str());
 }
 
 EventHandler::~EventHandler() {
-  printf("%s %d %p\n", __FUNCTION__, __LINE__, this);
+  //printf("%s %d %p\n", __FUNCTION__, __LINE__, this);
 }
 
 void EventHandler::Notify(
@@ -62,10 +62,10 @@ void EventHandler::Notify(
 void EventHandler::Run(
     scoped_refptr<Event> event, const EventHandlerFinishCallback& finish_cb) {
   if (weak_owner_) {
-  printf("%s %d\n", __FUNCTION__, __LINE__);
+  //printf("%s %d\n", __FUNCTION__, __LINE__);
     callback_.Run(event, finish_cb);
   } else {
-  printf("%s %d\n", __FUNCTION__, __LINE__);
+  //printf("%s %d\n", __FUNCTION__, __LINE__);
     finish_cb.Run();
   }
 }

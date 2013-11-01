@@ -78,9 +78,11 @@ void ApplicationExtensionInstance::HandleMessage(scoped_ptr<base::Value> msg) {
 void ApplicationExtensionInstance::OnGetManifest(
     scoped_ptr<XWalkExtensionFunctionInfo> info) {
   base::DictionaryValue** manifest_data = new DictionaryValue*(NULL);
+#if 0
   printf("=============================\n");
   sleep(5);
   printf("=============================\n");
+#endif
   BrowserThread::PostTaskAndReply(
       BrowserThread::UI,
       FROM_HERE,

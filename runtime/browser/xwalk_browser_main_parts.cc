@@ -255,8 +255,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
       runtime_context_->GetApplicationSystem();
   xwalk::application::ApplicationService* service =
       system->application_service();
-  xwalk::application::ApplicationEventRouter* event_router =
-      system->event_router();
+//  xwalk::application::ApplicationEventRouter* event_router =
+//      system->event_router();
 
   CommandLine* command_line = CommandLine::ForCurrentProcess();
   if (command_line->HasSwitch(switches::kRemoteDebuggingPort)) {
@@ -296,9 +296,9 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
 #endif  // OS_TIZEN_MOBILE
 
     if (xwalk::application::Application::IsIDValid(command_name)) {
-//      run_default_message_loop_ = service->Launch(command_name);
-      run_default_message_loop_ =
-        event_router->DispatchOnLaunchedEvent(command_name);
+      run_default_message_loop_ = service->Launch(command_name);
+//      run_default_message_loop_ =
+//        event_router->DispatchOnLaunchedEvent(command_name);
       return;
     }
 
@@ -325,8 +325,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
           LOG(INFO) << "[OK] Application uninstalled successfully: " << id;
         run_default_message_loop_ = false;
       } else {
-//        run_default_message_loop_ = service->Launch(id);
-        run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(id);
+        run_default_message_loop_ = service->Launch(id);
+//        run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(id);
       }
       return;
     }
@@ -354,8 +354,8 @@ void XWalkBrowserMainParts::PreMainMessageLoopRun() {
       run_default_message_loop_ = false;
       return;
     } else if (base::DirectoryExists(path)) {
-      //run_default_message_loop_ = service->Launch(path);
-      run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(path);
+      run_default_message_loop_ = service->Launch(path);
+//      run_default_message_loop_ = event_router->DispatchOnLaunchedEvent(path);
       return;
     }
   }

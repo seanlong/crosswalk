@@ -21,7 +21,7 @@ AppEventRegistrar::HandlerRecord::HandlerRecord(
 }
 
 AppEventRegistrar::HandlerRecord::~HandlerRecord() {
-  printf("%s\n", __FUNCTION__);
+  //printf("%s\n", __FUNCTION__);
 }
 
 bool
@@ -38,7 +38,7 @@ AppEventRegistrar::AppEventRegistrar(ApplicationEventRouter* router)
 
 AppEventRegistrar::~AppEventRegistrar() {
   RemoveAll();
-  printf("%s\n", __FUNCTION__);
+  //printf("%s\n", __FUNCTION__);
 }
 
 void AppEventRegistrar::Add(const std::string& event_name,
