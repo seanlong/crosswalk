@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "base/memory/weak_ptr.h"
 #include "base/threading/thread_checker.h"
+#include "xwalk/application/browser/application_event_registrar.h"
 #include "xwalk/application/browser/application_event_router.h"
 #include "xwalk/extensions/browser/xwalk_extension_function_handler.h"
 #include "xwalk/extensions/common/xwalk_extension.h"
@@ -22,8 +22,9 @@ class ApplicationSystem;
 }
 
 using application::Event;
-using application::EventHandler;
-using application::EventHandlerOwner;
+using application::EventHandlerCallback;
+using application::EventHandlerFinishCallback;
+using application::AppEventRegistrar;
 
 using extensions::XWalkExtension;
 using extensions::XWalkExtensionFunctionHandler;
@@ -43,8 +44,7 @@ class ApplicationExtension : public XWalkExtension {
   application::ApplicationSystem* application_system_;
 };
 
-class ApplicationExtensionInstance : public XWalkExtensionInstance,
-                                     public EventHandlerOwner {
+class ApplicationExtensionInstance : public XWalkExtensionInstance {
  public:
   explicit ApplicationExtensionInstance(
       application::ApplicationSystem* application_system);
@@ -79,20 +79,20 @@ class ApplicationExtensionInstance : public XWalkExtensionInstance,
   // Common event receiving callback.
   void OnEventReceived(
      scoped_refptr<application::Event> event,
-     const EventHandler::HandlerFinishCallback& callback);
+     const EventHandlerFinishCallback& callback);
  
   const application::Application* application_;
   application::ApplicationSystem* application_system_;
 
-  EventHandler::HandlerCallback event_callback_;
+  EventHandlerCallback event_callback_;
   std::set<std::string> registered_events_;
-  std::map<std::string, EventHandler::HandlerFinishCallback> pending_callbacks_;
+  std::map<std::string, EventHandlerFinishCallback> pending_callbacks_;
+
+  AppEventRegistrar registrar_;
  
   base::ThreadChecker thread_checker_;
  
   XWalkExtensionFunctionHandler handler_;
-  
-  base::WeakPtrFactory<ApplicationExtensionInstance> weak_ptr_factory_;
 };
 
 }  // namespace xwalk

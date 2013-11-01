@@ -8,7 +8,9 @@
 
 #include "base/bind.h"
 #include "base/file_util.h"
+#include "base/message_loop/message_loop.h"
 #include "content/public/browser/browser_thread.h"
+#include "xwalk/application/browser/application_event_registrar.h"
 #include "xwalk/application/browser/application_process_manager.h"
 #include "xwalk/application/browser/application_service.h"
 #include "xwalk/application/browser/application_system.h"
@@ -33,13 +35,13 @@ Event::~Event() {
 
 EventHandler::EventHandler(const std::string& event_name,
                            const std::string& app_id,
-                           const HandlerCallback& callback,
-                           const base::WeakPtr<EventHandlerOwner>& owner,
+                           const EventHandlerCallback& callback,
+                           const base::WeakPtr<AppEventRegistrar>& registrar,
                            int priority)
   : event_name_(event_name),
     app_id_(app_id),
     callback_(callback),
-    weak_owner_(owner),
+    weak_owner_(registrar),
     priority_(priority) {
   CHECK(base::MessageLoop::current());
   loop_ = base::MessageLoopProxy::current();
@@ -51,18 +53,19 @@ EventHandler::~EventHandler() {
 }
 
 void EventHandler::Notify(
-    scoped_refptr<Event> event, const HandlerFinishCallback& finish_cb) {
+    scoped_refptr<Event> event, const EventHandlerFinishCallback& finish_cb) {
   loop_->PostTask(FROM_HERE,
                   base::Bind(&EventHandler::Run,
                              base::Unretained(this), event, finish_cb));
 }
 
 void EventHandler::Run(
-    scoped_refptr<Event> event, const HandlerFinishCallback& finish_cb) {
-//    printf("%s %d %p\n", __FUNCTION__, __LINE__, this);
+    scoped_refptr<Event> event, const EventHandlerFinishCallback& finish_cb) {
   if (weak_owner_) {
+  printf("%s %d\n", __FUNCTION__, __LINE__);
     callback_.Run(event, finish_cb);
   } else {
+  printf("%s %d\n", __FUNCTION__, __LINE__);
     finish_cb.Run();
   }
 }
@@ -121,17 +124,10 @@ bool ApplicationEventRouter::DispatchEventToApp(
 
 void ApplicationEventRouter::AddEventHandler(
     scoped_ptr<EventHandler> handler) {
-  if (!BrowserThread::CurrentlyOn(BrowserThread::UI)) {
-      BrowserThread::PostTask(
-          BrowserThread::UI, FROM_HERE,
-          base::Bind(&ApplicationEventRouter::AddEventHandler,
-                     base::Unretained(this), base::Passed(&handler)));
-      return;
-  }
-
   DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
   const std::string& event_name = handler->GetEventName();
   HandlerList& handlers = handlers_map_[event_name];
+
   HandlerList::iterator it = handlers.begin();
   for (; it != handlers.end(); it++) {
     if ((*it)->GetPriority() < handler->GetPriority())
@@ -142,15 +138,6 @@ void ApplicationEventRouter::AddEventHandler(
 
 void ApplicationEventRouter::RemoveEventHandler(
     scoped_ptr<EventHandler> handler) {
-  if (!BrowserThread::CurrentlyOn(BrowserThread::UI)) {
-      BrowserThread::PostTask(
-          BrowserThread::UI, FROM_HERE,
-          base::Bind(
-            &ApplicationEventRouter::RemoveEventHandler,
-            base::Unretained(this), base::Passed(&handler)));
-      return;
-  }
-  
   DCHECK(BrowserThread::CurrentlyOn(BrowserThread::UI));
   const std::string& event_name = handler->GetEventName();
   HandlerList& handlers = handlers_map_[event_name];
@@ -168,7 +155,6 @@ void ApplicationEventRouter::RemoveEventHandler(
       break;
     }
   }
-
 #if 0
   for (HandlerList::iterator it = handlers.begin(); it != handlers.end(); it++)
     printf("%d %p\n", __LINE__, it->owner);
@@ -228,12 +214,15 @@ void ApplicationEventRouter::OnFinishHandler(
   HandlerList::iterator cur_handler_it = running_events_[event->name];
   HandlerList::iterator tmp_it = cur_handler_it++;
   if (removing_events_.find(event->name) != removing_events_.end() &&
-      tmp_it == removing_events_[event->name])
+      tmp_it == removing_events_[event->name]) {
     handlers.erase(removing_events_[event->name]);
+    removing_events_.erase(event->name);
+  }
 
   if (cur_handler_it == handlers.end()) {
     running_events_.erase(event->name);
   } else {
+    running_events_[event->name] = cur_handler_it;
     (*cur_handler_it)->Notify(event,
                               base::Bind(
                                 &ApplicationEventRouter::OnFinishHandler,

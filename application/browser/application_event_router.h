@@ -5,20 +5,23 @@
 #ifndef XWALK_APPLICATION_BROWSER_APPLICATION_EVENT_ROUTER_H_
 #define XWALK_APPLICATION_BROWSER_APPLICATION_EVENT_ROUTER_H_
 
-#include <string>
 #include <map>
 #include <list>
 #include <set>
+#include <string>
 #include <vector>
 
 #include "base/callback.h"
 #include "base/gtest_prod_util.h"
 #include "base/memory/linked_ptr.h"
 #include "base/memory/ref_counted.h"
-//TODO remove this from header
-#include "base/message_loop/message_loop.h"
+#include "base/memory/weak_ptr.h"
 #include "base/values.h"
 #include "content/public/browser/web_contents_observer.h"
+
+namespace base {
+class MessageLoopProxy;
+}
 
 namespace content {
 class WebContents;
@@ -27,7 +30,9 @@ class WebContents;
 namespace xwalk {
 namespace application {
 
+class ApplicationEventRouter;
 class ApplicationSystem;
+class AppEventRegistrar;
 
 class Event : public base::RefCounted<Event> {
  public:
@@ -44,46 +49,34 @@ class Event : public base::RefCounted<Event> {
   ~Event();
 };
 
-// Empty base class for EventHandler weak pointer dereference.
-class EventHandlerOwner {
-};
+typedef base::Callback<void()> EventHandlerFinishCallback;
+typedef base::Callback<void(scoped_refptr<Event>,
+    const EventHandlerFinishCallback&)> EventHandlerCallback;
 
 class EventHandler {
  public:
-  typedef base::Callback<void()> HandlerFinishCallback;
-  typedef base::Callback<void(scoped_refptr<Event>,
-      const HandlerFinishCallback&)> HandlerCallback;
-/*
+  // TODO(xiang): an event handler with an empty |app_id| string will handle the
+  // specified |event_name| for all existing applications.
   EventHandler(const std::string& event_name,
                const std::string& app_id,
-               const HandlerCallback& callback,
+               const EventHandlerCallback& callback,
+               const base::WeakPtr<AppEventRegistrar>& registrar,
                int priority = 100);
-*/
 
-  EventHandler(const std::string& event_name,
-               const std::string& app_id,
-               const HandlerCallback& callback,
-               const base::WeakPtr<EventHandlerOwner>& owner,
-               int priority = 100);
   ~EventHandler();
 
   // Called by EventRouter to dispatch the task to its creation thread.
   void Notify(scoped_refptr<Event> event,
-              const HandlerFinishCallback& finish_cb);
+              const EventHandlerFinishCallback& finish_cb);
 
-  // A wrapper to run callback_ task.
+  // A wrapper to run the callback_ task.
   void Run(scoped_refptr<Event> event,
-           const HandlerFinishCallback& finish_cb);
+           const EventHandlerFinishCallback& finish_cb);
 
   bool Equals(const EventHandler& handler) const;
 
   const std::string& GetEventName() const { return event_name_; }
-
   const std::string& GetAppID() const { return app_id_; }
-
-  int GetID() { return id_; }
-  void SetID(int id) { id_ = id; }
-
   int GetPriority() const { return priority_; }
 
  private:
@@ -93,9 +86,8 @@ class EventHandler {
   // The application who owns the handler.
   std::string app_id_;
 
-  base::WeakPtr<EventHandlerOwner> weak_owner_;
-
-  int id_;
+  // Weak pointer to AppEventRegistrar which owns this handler.
+  base::WeakPtr<AppEventRegistrar> weak_owner_;
 
   // The handler's priority to handle such event when multiple handlers are
   // registered to the same event. Handlers will be executed in descending order
@@ -103,7 +95,7 @@ class EventHandler {
   int priority_;
 
   // Where the real event processing happens.
-  HandlerCallback callback_;
+  EventHandlerCallback callback_;
 
   // Saved message loop proxy to post the task.
   scoped_refptr<base::MessageLoopProxy> loop_;
@@ -176,7 +168,6 @@ class ApplicationEventRouter {
   typedef std::vector<scoped_refptr<Event> > LazyEvents;
   typedef std::map<std::string, HandlerList::iterator> HandlerItMap;
 
-  std::map<std::string, int> handlers_id_map_;
   EventHandlerMap handlers_map_;
   LazyEvents lazy_events_;
   HandlerItMap running_events_;

@@ -14,6 +14,8 @@
         '../third_party/zlib/google/zip.gyp:zip',
       ],
       'sources': [
+        'browser/application_event_registrar.cc',
+        'browser/application_event_registrar.h',
         'browser/application_event_router.cc',
         'browser/application_event_router.h',
         'browser/application_store.cc',
