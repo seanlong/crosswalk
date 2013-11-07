@@ -26,11 +26,11 @@ Event::Event(
   : name(event_name),
     args(event_args.Pass()) {
   DCHECK(this->args.get());
-  //printf("%s %d\n", __FUNCTION__, __LINE__);
+//  printf("%s %d\n", __FUNCTION__, __LINE__);
 }
 
 Event::~Event() {
-  //printf("%s %d %s\n", __FUNCTION__, __LINE__, name.c_str());
+//  printf("%s %d %s\n", __FUNCTION__, __LINE__, name.c_str());
 }
 
 EventHandler::EventHandler(const std::string& event_name,
@@ -144,6 +144,7 @@ void ApplicationEventRouter::RemoveEventHandler(
 
   HandlerList::iterator it = handlers.begin();
   for (; it != handlers.end(); it++) {
+    //printf("%s %d\n", __FUNCTION__, __LINE__);
     if ((*it)->Equals(*handler)) {
       // If the event handler is already running, then mark it for removing in
       // the finish callback.
@@ -151,6 +152,7 @@ void ApplicationEventRouter::RemoveEventHandler(
         removing_events_[event_name] = it;
         break;
       }
+    //printf("%s %d\n", __FUNCTION__, __LINE__);
       handlers.erase(it);
       break;
     }

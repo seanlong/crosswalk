@@ -26,11 +26,13 @@ class AppEventRegistrar {
 
   void Add(const std::string& event_name,
            const std::string& app_id,
-           const EventHandlerCallback& callback);
+           const EventHandlerCallback& callback,
+           int priority = 100);
 
   void Remove(const std::string& event_name,
               const std::string& app_id,
-              const EventHandlerCallback& callback);
+              const EventHandlerCallback& callback,
+              int priority = 100);
 
   void RemoveAll();
 
@@ -38,7 +40,8 @@ class AppEventRegistrar {
   struct HandlerRecord {
     HandlerRecord(const std::string& event_name,
                   const std::string& app_id,
-                  const EventHandlerCallback& callback);
+                  const EventHandlerCallback& callback,
+                  int priority);
     ~HandlerRecord();
 
     bool operator==(const HandlerRecord& other) const;
@@ -46,6 +49,7 @@ class AppEventRegistrar {
     std::string event_name;
     std::string app_id;
     EventHandlerCallback callback;
+    int priority;
   };
 
   typedef std::vector<linked_ptr<HandlerRecord> > HandlerRecordVector;

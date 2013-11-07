@@ -133,6 +133,11 @@ class ApplicationEventRouter {
       const std::string& app_id, const std::set<std::string>& events);
 
  private:
+  friend class ApplicationEventRouterTest;
+  FRIEND_TEST_ALL_PREFIXES(ApplicationEventRouterTest, EventHandler);
+  FRIEND_TEST_ALL_PREFIXES(
+      ApplicationEventRouterTest, EventHandlerOnDifferentThread);
+
   class MainDocObserver : public content::WebContentsObserver {
    public:
     MainDocObserver(const std::string& app_id,
