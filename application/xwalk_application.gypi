@@ -15,6 +15,8 @@
         'xwalk_application_resources',
       ],
       'sources': [
+        'browser/application_event_router.cc',
+        'browser/application_event_router.h',
         'browser/application_store.cc',
         'browser/application_store.h',
         'browser/application_process_manager.cc',
