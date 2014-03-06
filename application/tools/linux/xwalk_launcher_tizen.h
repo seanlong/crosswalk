@@ -7,4 +7,6 @@
 
 int xwalk_appcore_init(int argc, char** argv, const char* name);
 
+void start_dbus_server(const char* app_id);
+
 #endif  // XWALK_APPLICATION_TOOLS_LINUX_XWALK_LAUNCHER_TIZEN_H_

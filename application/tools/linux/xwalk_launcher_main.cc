@@ -165,6 +165,7 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Failed to initialize appcore");
     exit(1);
   }
+  start_dbus_server(appid);
 #endif
 
   g_main_loop_run(mainloop);
