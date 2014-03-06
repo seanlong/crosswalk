@@ -92,11 +92,8 @@ def CopyJavaSources(project_source, out_directory):
       'ui/android/java/resource_map/org/chromium/ui/R.java',
 
       # XWalk java sources.
-      'xwalk/runtime/android/java/src/org/xwalk/core',
+      'xwalk/runtime/android/core/src/org/xwalk/core',
       'xwalk/extensions/android/java/src/org/xwalk/core/extensions',
-      'xwalk/runtime/android/java/src/org/xwalk/runtime/extension',
-      'xwalk/runtime/android/java/'
-          'src/org/xwalk/core/XWalkCookieManager.java',
   ]
 
   for source in java_srcs_to_copy:
@@ -160,8 +157,8 @@ def CopyJSBindingFiles(project_source, out_directory):
   print 'Copying js binding files...'
   jsapi_directory = os.path.join(out_directory,
                                  LIBRARY_PROJECT_NAME,
-                                 'assets',
-                                 'jsapi')
+                                 'res',
+                                 'raw')
   if not os.path.exists(jsapi_directory):
     os.makedirs(jsapi_directory)
 
