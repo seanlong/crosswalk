@@ -114,6 +114,10 @@ int main(int argc, char** argv) {
   g_signal_connect(running_apps_om, "object-removed",
                    G_CALLBACK(object_removed), NULL);
 
+#if defined(OS_TIZEN)
+  start_dbus_server(appid);
+#endif
+
   GDBusProxy* running_proxy = g_dbus_proxy_new_sync(
       connection,
       G_DBUS_PROXY_FLAGS_NONE, NULL, xwalk_service_name,
@@ -165,7 +169,6 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Failed to initialize appcore");
     exit(1);
   }
-  start_dbus_server(appid);
 #endif
 
   g_main_loop_run(mainloop);

@@ -184,13 +184,8 @@ static gboolean on_new_connection(GDBusServer *server,
 
   g_object_ref(connection);
   registration_id = g_dbus_connection_register_object(
-    connection,
-    "/launcher1",
-    introspection_data->interfaces[0],
-    &interface_vtable,
-    NULL,
-    NULL,
-    &error);
+      connection, "/launcher1", introspection_data->interfaces[0],
+      &interface_vtable, NULL, NULL, &error);
 
   if (registration_id > 0)
     return TRUE;
@@ -199,27 +194,25 @@ static gboolean on_new_connection(GDBusServer *server,
   return FALSE;
 }
 
-void start_dbus_server(const char* app_id) {
-  introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
+void start_dbus_service(const char* app_id) {
+  introspection_data = g_dbus_node_info_new_for_xml(introspection_xml, NULL);
   gchar* address =
-      g_strjoin(NULL, "unix:abstract=/tmp/xwalk-launcher-", app_id);
+      g_strjoin(NULL, "unix:path=/tmp/xwalk-launcher-", app_id, NULL);
+  fprintf(stderr, "address: %s\n", address);
+  gchar* guid = g_dbus_generate_guid();
+
   GError* error = NULL;
-  GDBusServer* server = g_dbus_server_new_sync(address,
-                                  G_DBUS_SERVER_FLAGS_NONE,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &error);
-  g_dbus_server_start(server);
+  GDBusServer* server = g_dbus_server_new_sync(
+      address, G_DBUS_SERVER_FLAGS_NONE, guid, NULL, NULL, &error);
+  g_free(address);
   if (!server) {
     fprintf(stderr, "Error creating server: %s\n", error->message);
-    fprintf(stderr, "Some features may not work.\n");
     return;
   }
-  g_signal_connect(server,
-                   "new-connection",
-                   G_CALLBACK(on_new_connection),
-                   NULL);
+
+  g_dbus_server_start(server);
+  g_signal_connect(
+      server, "new-connection", G_CALLBACK(on_new_connection), NULL);
 }
 
 static void application_event_cb(enum app_event event, void* data, bundle* b) {
