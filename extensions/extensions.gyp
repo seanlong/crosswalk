@@ -10,11 +10,27 @@
         '../../url/url.gyp:url_lib',
         '../../v8/tools/gyp/v8.gyp:v8',
         '../../third_party/WebKit/public/blink.gyp:blink',
+        '../../build/linux/system.gyp:dbus',
+        '../../build/linux/system.gyp:gio',
         'extensions_resources.gyp:xwalk_extensions_resources',
       ],
       'includes': [
         '../../build/filename_rules.gypi',
       ],
+      
+      'variables': {
+        'glib_packages': 'glib-2.0 gio-unix-2.0 dbus-glib-1 dbus-1',
+      },
+
+      'link_settings': {
+        'ldflags': [
+          '<!@(pkg-config --libs-only-L --libs-only-other <(glib_packages))',
+        ],
+        'libraries': [
+          '<!@(pkg-config --libs-only-l <(glib_packages))',
+        ],
+      },
+
       'sources': [
         'browser/xwalk_extension_data.cc',
         'browser/xwalk_extension_data.h',
@@ -66,6 +82,10 @@
         'renderer/xwalk_v8_utils.h',
         'renderer/xwalk_v8tools_module.cc',
         'renderer/xwalk_v8tools_module.h',
+        'renderer/dbus_introspect.cc',
+        'renderer/dbus_introspect.h',
+        'renderer/dbus_library.cc',
+        'renderer/dbus_library.h',
       ],
     },
   ],

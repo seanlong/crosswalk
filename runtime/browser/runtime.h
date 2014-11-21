@@ -25,6 +25,7 @@ struct FileChooserParams;
 class RenderProcessHost;
 class SiteInstance;
 class WebContents;
+class RenderViewHost;
 }
 
 namespace xwalk {
@@ -142,6 +143,7 @@ class Runtime : public content::WebContentsDelegate,
   // Overridden from content::WebContentsObserver.
   virtual void DidUpdateFaviconURL(
       const std::vector<content::FaviconURL>& candidates) OVERRIDE;
+  virtual void RenderViewCreated(content::RenderViewHost* render_view_host) OVERRIDE;
 
   // Callback method for WebContents::DownloadImage.
   void DidDownloadFavicon(int id,

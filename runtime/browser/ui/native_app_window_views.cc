@@ -22,6 +22,12 @@
 #include "xwalk/runtime/browser/ui/native_app_window_tizen.h"
 #endif
 
+#include "ui/aura/window.h"
+#include "ui/aura/window_tree_host.h"
+#include "ui/views/widget/desktop_aura/desktop_window_tree_host.h"
+#include "base/command_line.h"
+#include "xwalk/runtime/common/xwalk_switches.h"
+
 namespace xwalk {
 
 NativeAppWindowViews::NativeAppWindowViews(
@@ -58,18 +64,38 @@ void NativeAppWindowViews::Initialize() {
       gfx::Screen::GetNativeScreen()->GetPrimaryDisplay().work_area();
   params.bounds = bounds;
 #else
-  params.type = views::Widget::InitParams::TYPE_WINDOW;
-  params.bounds = create_params_.bounds;
+  CommandLine* command_line = CommandLine::ForCurrentProcess();
+  if (command_line->HasSwitch(switches::kDesktopWindow)) {
+    params.type = views::Widget::InitParams::TYPE_DESKTOP;
+    params.visible_on_all_workspaces = true;
+    gfx::Rect bounds =
+        gfx::Screen::GetNativeScreen()->GetPrimaryDisplay().work_area();
+    bounds.set_height(bounds.height() + 6); //TODO(xiang): support different dock types.
+    params.bounds = bounds;
+  } else if (command_line->HasSwitch(switches::kDockWindow)) {
+    params.type = views::Widget::InitParams::TYPE_DOCK;
+    params.visible_on_all_workspaces = true;
+    gfx::Rect bounds =
+        gfx::Screen::GetNativeScreen()->GetPrimaryDisplay().work_area();
+    bounds.set_height(68);
+    params.bounds = bounds;
+  } else {
+    params.type = views::Widget::InitParams::TYPE_WINDOW;
+    params.bounds = create_params_.bounds;
+  }
 #endif
   params.net_wm_pid = create_params_.net_wm_pid;
 
+  //FIXME(xiang): this will call SetBoundsConstrained which is disabled ATM.
   window_->Init(params);
 
 #if defined(OS_TIZEN_MOBILE)
   // Set the bounds manually to avoid inset.
   window_->SetBounds(bounds);
 #elif !defined(USE_OZONE)
-  window_->CenterWindow(create_params_.bounds.size());
+  if (!command_line->HasSwitch(switches::kDesktopWindow) &&
+      !command_line->HasSwitch(switches::kDockWindow))
+    window_->CenterWindow(create_params_.bounds.size());
 #endif
 
   if (create_params_.state == ui::SHOW_STATE_FULLSCREEN)

@@ -18,6 +18,9 @@ extern const char kListFeaturesFlags[];
 extern const char kXWalkAllowExternalExtensionsForRemoteSources[];
 extern const char kXWalkDataPath[];
 
+extern const char kDesktopWindow[];
+extern const char kDockWindow[];
+
 #if defined(OS_ANDROID)
 extern const char kXWalkProfileName[];
 #endif

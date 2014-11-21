@@ -33,4 +33,7 @@ const char kXWalkDataPath[] = "data-path";
 const char kXWalkProfileName[] = "profile-name";
 #endif
 
+const char kDesktopWindow[] = "desktop-window";
+const char kDockWindow[] = "dock-window";
+
 }  // namespace switches

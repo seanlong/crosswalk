@@ -13,6 +13,8 @@
 #include "third_party/WebKit/public/web/WebView.h"
 #include "xwalk/extensions/renderer/xwalk_v8_utils.h"
 
+#include "xwalk/extensions/renderer/dbus_library.h"
+
 using content::RenderView;
 using blink::WebFrame;
 using blink::WebLocalFrame;
@@ -133,6 +135,8 @@ XWalkV8ToolsModule::XWalkV8ToolsModule() {
 
   object_template->Set(v8::String::NewFromUtf8(isolate, "getWindowObject"),
                        v8::FunctionTemplate::New(isolate, GetWindowObject));
+
+  dbus_library::DBusExtension::Initialize(isolate, object_template); 
 
   object_template_.Reset(isolate, object_template);
 }

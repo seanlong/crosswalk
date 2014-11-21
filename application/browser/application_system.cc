@@ -86,11 +86,11 @@ bool ApplicationSystem::LaunchFromCommandLine(
 
   base::FilePath path;
   bool is_local = url.SchemeIsFile() && net::FileURLToFilePath(url, &path);
-  if (!is_local) {  // Handles external URL.
+  //if (!is_local) {  // Handles external URL.
     run_default_message_loop = application_service_->LaunchHostedURL(
         url, launch_params(cmd_line));
     return true;
-  }
+  //}
 
   if (!base::PathExists(path))
     return false;

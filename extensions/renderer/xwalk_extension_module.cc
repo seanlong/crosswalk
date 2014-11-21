@@ -152,6 +152,13 @@ void XWalkExtensionModule::LoadExtensionCode(
   CHECK(!instance_id_);
   instance_id_ = client_->CreateInstance(extension_name_, this);
 
+#if 0
+  std::string content;
+  base::ReadFileToString(base::FilePath("/work/cameo/crosswalk/src/out/Release/1.txt"), &content);
+  LOG(INFO) << base::PathExists(base::FilePath("/work/cameo/crosswalk/src/out/Release/1.txt"));
+  LOG(INFO) << content;
+#endif
+
   std::string exception;
   std::string wrapped_api_code = WrapAPICode(extension_code_, extension_name_);
   v8::Handle<v8::Value> result =

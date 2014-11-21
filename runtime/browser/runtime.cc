@@ -30,6 +30,9 @@
 #include "ui/gfx/image/image_skia.h"
 #include "ui/gfx/native_widget_types.h"
 
+#include "content/public/browser/render_widget_host_view.h"
+#include "content/public/browser/browser_thread.h"
+
 using content::FaviconURL;
 using content::WebContents;
 
@@ -303,6 +306,14 @@ void Runtime::DidUpdateFaviconURL(const std::vector<FaviconURL>& candidates) {
       0,     // No maximum size
       base::Bind(
           &Runtime::DidDownloadFavicon, weak_ptr_factory_.GetWeakPtr()));
+}
+
+void Runtime::RenderViewCreated(content::RenderViewHost* render_view_host) {
+  CommandLine* command_line = CommandLine::ForCurrentProcess();
+  if (command_line->HasSwitch(switches::kDesktopWindow) ||
+      command_line->HasSwitch(switches::kDockWindow)) {
+    render_view_host->GetView()->SetBackgroundOpaque(false);
+  }
 }
 
 void Runtime::DidDownloadFavicon(int id,
