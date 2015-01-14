@@ -71,9 +71,16 @@ bool NaClBrowserDelegateImpl::URLMatchesDebugPatterns(
 bool NaClBrowserDelegateImpl::IsNonSfiModeAllowed(
     const base::FilePath& profile_directory,
     const GURL& manifest_url) {
-  return false;
+  return true;
 }
 
+/*
+bool NaClBrowserDelegateImpl::IsPluginAllowedToUseDevChannelAPIs(
+            content::BrowserContext* browser_context,
+                  const GURL& url) {
+  return true;
+}
+*/
 // This function is security sensitive.  Be sure to check with a security
 // person before you modify it.
 bool NaClBrowserDelegateImpl::MapUrlToLocalFilePath(

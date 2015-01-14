@@ -21,6 +21,8 @@
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/content_browser_client.h"
 
+#include "xwalk/runtime/browser/xwalk_special_storage_policy.h"
+
 namespace net {
 class URLRequestContextGetter;
 }
@@ -116,6 +118,7 @@ class XWalkBrowserContext
       scoped_refptr<RuntimeURLRequestContextGetter> >
       PartitionPathContextGetterMap;
   PartitionPathContextGetterMap context_getters_;
+  scoped_refptr<XWalkSpecialStoragePolicy> storage_policy_;
 
   DISALLOW_COPY_AND_ASSIGN(XWalkBrowserContext);
 };

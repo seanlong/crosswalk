@@ -354,6 +354,13 @@ void XWalkContentBrowserClient::CancelPermissionRequest(
   }
 }
 
+
+bool XWalkContentBrowserClient::IsPluginAllowedToCallRequestOSFileHandle(
+      content::BrowserContext* browser_context,
+      const GURL& url) {
+  return true;
+}
+
 void XWalkContentBrowserClient::DidCreatePpapiPlugin(
     content::BrowserPpapiHost* browser_host) {
 #if defined(ENABLE_PLUGINS)

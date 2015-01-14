@@ -187,7 +187,9 @@ XWalkBrowserContext::GetGuestManager() {
 }
 
 storage::SpecialStoragePolicy* XWalkBrowserContext::GetSpecialStoragePolicy() {
-  return NULL;
+  if (!storage_policy_.get())
+    storage_policy_ = new XWalkSpecialStoragePolicy();
+  return storage_policy_.get();
 }
 
 content::PushMessagingService* XWalkBrowserContext::GetPushMessagingService() {

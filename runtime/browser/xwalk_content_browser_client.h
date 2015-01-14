@@ -134,6 +134,10 @@ class XWalkContentBrowserClient : public content::ContentBrowserClient {
                        bool* no_javascript_access) override;
 #endif
 
+  bool IsPluginAllowedToCallRequestOSFileHandle(
+      content::BrowserContext* browser_context,
+      const GURL& url) override;
+
   void DidCreatePpapiPlugin(
       content::BrowserPpapiHost* browser_host) override;
   content::BrowserPpapiHost* GetExternalBrowserPpapiHost(
