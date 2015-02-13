@@ -301,4 +301,11 @@ void Runtime::RequestMediaAccessPermission(
       web_contents, request, callback);
 }
 
+bool Runtime::CheckMediaAccessPermission(
+    content::WebContents* web_contents,
+    const GURL& security_origin,
+    content::MediaStreamType type) {
+  return true;
+}
+
 }  // namespace xwalk

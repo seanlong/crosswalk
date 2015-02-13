@@ -39,6 +39,8 @@ class XWalkContentClient : public content::ContentClient {
   std::string GetProcessTypeNameInEnglish(int type) override;
 
  private:
+  void AddPepperFlashPlugin(std::vector<content::PepperPluginInfo>* plugins);
+
   DISALLOW_COPY_AND_ASSIGN(XWalkContentClient);
 };
 

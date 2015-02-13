@@ -30,4 +30,14 @@ const char kXWalkDataPath[] = "data-path";
 const char kXWalkProfileName[] = "profile-name";
 #endif
 
+#if !defined(DISABLE_NACL)
+// Use the PPAPI (Pepper) Flash found at the given path.
+const char kPpapiFlashPath[] = "ppapi-flash-path";
+
+// Report the given version for the PPAPI (Pepper) Flash. The version should be
+// numbers separated by '.'s (e.g., "12.3.456.78"). If not specified, it
+// defaults to "10.2.999.999".
+const char kPpapiFlashVersion[] = "ppapi-flash-version";
+#endif
+
 }  // namespace switches

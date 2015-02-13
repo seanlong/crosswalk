@@ -10,8 +10,11 @@
 #include "base/files/file_util.h"
 #include "base/path_service.h"
 #include "base/strings/string_piece.h"
+#include "base/strings/string_split.h"
+#include "base/strings/string_util.h"
 #include "base/strings/utf_string_conversions.h"
 #include "components/nacl/common/nacl_process_type.h"
+#include "content/public/common/content_constants.cc"
 #include "content/public/common/content_switches.h"
 #include "content/public/common/user_agent.h"
 #if !defined(DISABLE_NACL)
@@ -43,6 +46,72 @@ const uint32 kNaClPluginPermissions = ppapi::PERMISSION_PRIVATE |
 const char kPnaclPluginMimeType[] = "application/x-pnacl";
 const char kPnaclPluginExtension[] = "";
 const char kPnaclPluginDescription[] = "Portable Native Client Executable";
+
+const int32 kPepperFlashPermissions = ppapi::PERMISSION_DEV |
+                                      ppapi::PERMISSION_PRIVATE |
+                                      ppapi::PERMISSION_BYPASS_USER_GESTURE |
+                                      ppapi::PERMISSION_FLASH;
+
+content::PepperPluginInfo CreatePepperFlashInfo(const base::FilePath& path,
+                                                const std::string& version) {
+  content::PepperPluginInfo plugin;
+
+  plugin.is_out_of_process = true;
+  plugin.name = content::kFlashPluginName;
+  plugin.path = path;
+  plugin.permissions = kPepperFlashPermissions;
+
+  std::vector<std::string> flash_version_numbers;
+  base::SplitString(version, '.', &flash_version_numbers);
+  if (flash_version_numbers.size() < 1)
+    flash_version_numbers.push_back("11");
+  // |SplitString()| puts in an empty string given an empty string. :(
+  else if (flash_version_numbers[0].empty())
+    flash_version_numbers[0] = "11";
+  if (flash_version_numbers.size() < 2)
+    flash_version_numbers.push_back("2");
+  if (flash_version_numbers.size() < 3)
+    flash_version_numbers.push_back("999");
+  if (flash_version_numbers.size() < 4)
+    flash_version_numbers.push_back("999");
+  // E.g., "Shockwave Flash 10.2 r154":
+  plugin.description = plugin.name + " " + flash_version_numbers[0] + "." +
+      flash_version_numbers[1] + " r" + flash_version_numbers[2];
+  plugin.version = JoinString(flash_version_numbers, '.');
+  content::WebPluginMimeType swf_mime_type(content::kFlashPluginSwfMimeType,
+                                           content::kFlashPluginSwfExtension,
+                                           content::kFlashPluginSwfDescription);
+  plugin.mime_types.push_back(swf_mime_type);
+  content::WebPluginMimeType spl_mime_type(content::kFlashPluginSplMimeType,
+                                           content::kFlashPluginSplExtension,
+                                           content::kFlashPluginSplDescription);
+  plugin.mime_types.push_back(spl_mime_type);
+
+  return plugin;
+}
+
+void AddPepperFlash(std::vector<content::PepperPluginInfo>* plugins,
+                    const base::FilePath& path,
+                    const std::string& version) {
+  base::FilePath flash_path = path;
+  std::string flash_version = version;
+  const base::CommandLine::StringType cmdline_path =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueNative(
+          switches::kPpapiFlashPath);
+  if (!cmdline_path.empty())
+    flash_path = base::FilePath(cmdline_path);
+
+  // Also get the version from the command-line. Should be something like 11.2
+  // or 11.2.123.45.
+  std::string cmdline_version =
+      base::CommandLine::ForCurrentProcess()->GetSwitchValueASCII(
+          switches::kPpapiFlashVersion);
+  if (!cmdline_version.empty())
+    flash_version = cmdline_version;
+
+   plugins->push_back(
+       CreatePepperFlashInfo(base::FilePath(flash_path), flash_version));
+}
 #endif
 
 }  // namespace
@@ -108,6 +177,12 @@ void XWalkContentClient::AddPepperPlugins(
     nacl.permissions = kNaClPluginPermissions;
     plugins->push_back(nacl);
   }
+
+  const base::FilePath flash_path =
+      base::FilePath("/opt/google/chrome/PepperFlash/libpepflashplayer.so");
+  // TODO(xiang): fetch version info from manifest.json
+  const std::string flash_version = "16.0.0.305";
+  AddPepperFlash(plugins, flash_path, flash_version);
 #endif
 }
 

@@ -21,6 +21,11 @@ extern const char kXWalkDataPath[];
 extern const char kXWalkProfileName[];
 #endif
 
+#if !defined(DISABLE_NACL)
+extern const char kPpapiFlashPath[];
+extern const char kPpapiFlashVersion[];
+#endif
+
 }  // namespace switches
 
 #endif  // XWALK_RUNTIME_COMMON_XWALK_SWITCHES_H_
