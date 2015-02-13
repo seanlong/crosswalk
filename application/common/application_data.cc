@@ -121,7 +121,9 @@ ApplicationData::ApplicationData(const base::FilePath& path,
       path_(path),
       manifest_(manifest.release()),
       finished_parsing_manifest_(false),
-      source_type_(source_type) {
+      source_type_(source_type),
+      window_width_(0),
+      window_height_(0) {
   DCHECK(path_.empty() || path_.IsAbsolute());
 }
 
@@ -177,6 +179,8 @@ bool ApplicationData::Init(const std::string& explicit_id,
   if (!LoadVersion(error))
     return false;
   if (!LoadDescription(error))
+    return false;
+  if (!LoadWindowSetting(error))
     return false;
 
   application_url_ = ApplicationData::GetBaseURLFromApplicationId(ID());
@@ -327,6 +331,24 @@ bool ApplicationData::LoadDescription(base::string16* error) {
 
   // No error but also no description found.
   return true;
+}
+
+bool ApplicationData::LoadWindowSetting(base::string16* error) {
+  DCHECK(error);
+  if (manifest_type() != Manifest::TYPE_MANIFEST)
+    return true;
+  bool ok = true;
+  if (manifest_->HasKey("window")) {
+    const base::DictionaryValue* window_dict;
+    if (!manifest_->GetDictionary("window", &window_dict) || !window_dict) {
+      ok = false;
+      *error = base::ASCIIToUTF16("Failed to get window size.");
+    } else {
+      window_dict->GetInteger("width", &window_width_);
+      window_dict->GetInteger("height", &window_height_);
+    }
+  }
+  return ok;
 }
 
 StoredPermission ApplicationData::GetPermission(

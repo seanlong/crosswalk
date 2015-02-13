@@ -222,6 +222,10 @@ bool Application::Launch() {
   params.state = is_wgt ?
       GetWindowShowState<Manifest::TYPE_WIDGET>() :
       GetWindowShowState<Manifest::TYPE_MANIFEST>();
+  if (!is_wgt) {
+    params.bounds.set_width(data_->WindowWidth());
+    params.bounds.set_height(data_->WindowHeight());
+  }
 
   window_show_params_ = params;
   // Only the first runtime can have a launch screen.
